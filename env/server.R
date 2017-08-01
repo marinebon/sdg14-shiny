@@ -1,3 +1,5 @@
+# TODO: seascapes, per https://marinebon.github.io/seascape-viz/prep.html & /mbon/data_big/satellite/seascapes/*
+
 shinyServer(function(input, output, session) {
   
   #get_nc = reactive({

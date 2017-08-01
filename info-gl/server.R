@@ -9,29 +9,58 @@ shinyServer(function(input, output, session) {
       eez$Territory1, eez$Area_km2
     ) %>% lapply(HTML)
     
+    # leaflet(
+    #   eez,
+    #   options = leafletOptions(
+    #     crs=leafletCRS(
+    #       crsClass='L.Proj.CRS', code='ESRI:53009',
+    #       proj4def= crs_mol, # ))) %>%
+    #       resolutions = c(65536, 32768, 16384, 8192, 4096, 2048)))) %>%
+    #   addGraticule(style= list(color= '#999', weight= 0.5, opacity= 1)) %>%
+    #   addGraticule(sphere = TRUE, style= list(color= '#777', weight= 1, opacity= 0.25)) %>%
+    #   addPolygons(
+    #     data=countries, group = 'land', weight = 1, color = '#4D4D4D') %>% # gplots::col2hex('gray30'): '#4D4D4D'
+    #   addPolygons(
+    #     group = 'eez',
+    #     fillColor = ~pal(Area_km2),
+    #     weight = 2,
+    #     opacity = 1,
+    #     color = "white",
+    #     #dashArray = "3",
+    #     fillOpacity = 0.7,
+    #     highlight = highlightOptions(
+    #       weight = 5,
+    #       color = "#666",
+    #       #dashArray = "",
+    #       fillOpacity = 0.7,
+    #       bringToFront = TRUE),
+    #     label = labels,
+    #     labelOptions = labelOptions(
+    #       style = list("font-weight" = "normal", padding = "3px 8px"),
+    #       textsize = "15px",
+    #       direction = "auto")) %>%
+    #   addLegend(
+    #     title=HTML('Area (km<sup>2</sup>)'),
+    #     pal = pal, values = ~Area_km2, opacity = 0.7,
+    #     position = "bottomright") #%>%
+    
     leaflet(
-      eez,
-      options = leafletOptions(
-        crs=leafletCRS(
-          crsClass='L.Proj.CRS', code='ESRI:53009',
-          proj4def= crs_mol, # ))) %>%
-          resolutions = c(65536, 32768, 16384, 8192, 4096, 2048)))) %>%
-      addGraticule(style= list(color= '#999', weight= 0.5, opacity= 1)) %>%
-      addGraticule(sphere = TRUE, style= list(color= '#777', weight= 1, opacity= 0.25)) %>%
+      #eez, 
+      options=leafletOptions(
+        minZoom=2, 
+        worldCopyJump=T)) %>%
+      addProviderTiles("Esri.OceanBasemap") %>%
       addPolygons(
-        data=countries, group = 'land', weight = 1, color = '#4D4D4D') %>% # gplots::col2hex('gray30'): '#4D4D4D'
-      addPolygons(
+        data=eez,
         group = 'eez',
         fillColor = ~pal(Area_km2),
         weight = 2,
         opacity = 1,
-        color = "white",
-        #dashArray = "3",
+        color = 'white',
         fillOpacity = 0.7,
         highlight = highlightOptions(
           weight = 5,
           color = "#666",
-          #dashArray = "",
           fillOpacity = 0.7,
           bringToFront = TRUE),
         label = labels,
@@ -41,8 +70,8 @@ shinyServer(function(input, output, session) {
           direction = "auto")) %>%
       addLegend(
         title=HTML('Area (km<sup>2</sup>)'),
-        pal = pal, values = ~Area_km2, opacity = 0.7,
-        position = "bottomright") #%>%
+        pal = pal, values = eez$Area_km2, opacity = 0.7,
+        position = "bottomright")
     #
   })
   

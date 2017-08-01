@@ -20,21 +20,24 @@ for (pkg in packages){ # pkg= packages[1] # pkg = 'r-spatial/mapview@develop' # 
   }
 }
 
-# set vars
-#setwd('info-gl')
-countries_geo = 'data/countries.geojson'
-eez_shp = 'data/eez_s005.shp'
-crs_mol = '+proj=moll +lon_0=0 +x_0=0 +y_0=0 +a=6371000 +b=6371000 +units=m +no_defs'
+# # set vars
+# #setwd('info-gl')
+# countries_geo = 'data/countries.geojson'
+# eez_shp = 'data/eez_s005.shp'
+# crs_mol = '+proj=moll +lon_0=0 +x_0=0 +y_0=0 +a=6371000 +b=6371000 +units=m +no_defs'
+# 
+# # prep data
+# if (!file.exists(countries_geo)){
+#   download.file(
+#     'https://github.com/datasets/geo-boundaries-world-110m/raw/master/countries.geojson', 
+#     countries_geo)}
+# 
+# # read data
+# eez = read_sf(eez_shp)
+# countries = read_sf(countries_geo)
 
-# prep data
-if (!file.exists(countries_geo)){
-  download.file(
-    'https://github.com/datasets/geo-boundaries-world-110m/raw/master/countries.geojson', 
-    countries_geo)}
-
-# read data
-eez = read_sf(eez_shp)
-countries = read_sf(countries_geo)
+eez_s005005_shp = '../info-gl/data/eez_s005005.shp'
+eez = read_sf(eez_s005005_shp) # plot(eez['Territory1'])
 
 # process data
 eez = eez %>% # eez$Pol_type %>% table()
