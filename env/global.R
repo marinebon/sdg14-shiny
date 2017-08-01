@@ -42,10 +42,10 @@ if (!file.exists(eez_s005005_shp)){
 
   write_sf(eez_s005005, eez_s005005_shp)
 }
-eez = read_sf(eez_s005005_shp) # plot(eez['Territory1'])
+eez_sf = read_sf(eez_s005005_shp) # plot(eez['Territory1'])
 
 # process data
-eez = eez %>% # eez$Pol_type %>% table()
+eez_sf = eez_sf %>% # eez$Pol_type %>% table()
   filter(Pol_type=='200NM') %>% # 'Disputed','Joint regime'
   group_by(Sovereign1) %>%
   mutate(

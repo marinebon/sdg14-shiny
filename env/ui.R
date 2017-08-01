@@ -5,8 +5,9 @@ shinyUI(fluidPage(
    
    sidebarLayout(
       sidebarPanel(
-        selectInput('sel_env', 'Environmental Data', env_files, multiple=F),
-        selectizeInput('sel_eez', 'EEZ - Territory', c('', eez$sov_ter), selected=''), #, multiple=F),
+        selectInput('sel_nc', 'NetCDF', env_files, multiple=F),
+        uiOutput('ui_var'),               
+        selectizeInput('sel_eez', 'EEZ - Territory', c('', eez_sf$sov_ter), selected=''), #, multiple=F),
         dygraphOutput('ts_plot')
       ),
       mainPanel(
