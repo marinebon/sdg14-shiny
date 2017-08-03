@@ -2,47 +2,87 @@
 
 shinyServer(function(input, output, session) {
   
-  #get_nc = reactive({
-     # nc_path = file.path(env_dir, env_files[[1]])
-     # names(nc$var)
-  #})
+  get_s = reactive({
+    req(input$sel_grd)
+    
+    s = stack(input$sel_grd)
+    
+    # dates
+    attr(s, 'dates') = as_date(names(s), format='ymd_%Y.%m.%d')
+    
+    # update sel_lyr
+    cat(file=stderr(),'\nupdating sel_lyr: months for new s from sel_grd\n')
+    month_choices = setNames(
+      names(s),
+      month.abb[month(attr(s, 'dates'))])
+    updateSelectInput(session, 'sel_lyr', 'Month', month_choices)
+    
+    s
+  })
   
-  output$ui_var <- renderUI({
-    nc_path = file.path(env_dir, input$sel_nc)
-    nc = nc_open(nc_path)
-    #vars = setdiff(names(nc$var), c('longitude','latitude'))
-    vars = names(nc$var)
-    vars = vars[str_detect(vars, '.*_clim$')]
-    selectInput('sel_var', 'Variable', vars)
+  get_s_type = reactive({
+    if (is.null(input$sel_grd))                 s_type = ''
+    if (str_detect(input$sel_grd, 'chlor_a'))   s_type = 'chl'
+    if (str_detect(input$sel_grd, 'seascapes')) s_type = 'seascape'
+    s_type
+  })
+  
+  output$grd_type = reactive({
+    get_s_type()
+  })
+  outputOptions(output, 'grd_type', suspendWhenHidden=F)
+  
+  get_r = reactive({
+    req(input$sel_grd)
+    req(input$sel_lyr)
+    req(get_s())
+    req(input$sel_lyr %in% names(get_s()))
+    
+    cat(file=stderr(), '\nget_r()\n')
+    
+    s = get_s()
+    
+    if (!input$sel_lyr %in% names(s)){
+      r = NULL
+    } else {
+      r = raster(s, layer=input$sel_lyr)
+    }
+    
+    r
+  })
+  
+  output$ui_lyr <- renderUI({
+    req(get_s())
+    
+    s = get_s()
+
+    month_choices = setNames(
+      names(s),
+      month.abb[month(attr(s, 'dates'))])
+    selectInput('sel_lyr', 'Month', month_choices)
   })
   
   output$map <- renderLeaflet({
+    req(get_r())
     
-    req(input$sel_nc)
-    req(input$sel_var)
-    # TODO: 
-    # - select varname month
-    # - cache r_l
-    # 
-    nc_path = file.path(env_dir, input$sel_nc)
-    nc = nc_open(nc_path)
-    lon = ncvar_get(nc, "longitude")[,1]
-    lat = ncvar_get(nc, "latitude")[1,]
-
-    #r = raster(nc, varname="January_chlor_a_clim") # , ext=extent(min(lon), max(lon), min(lat), max(lat)))
-    r = raster(nc_path, varname=input$sel_var) # , ext=extent(min(lon), max(lon), min(lat), max(lat)))
-
-    r <- flip(r, direction="y")
-    r <- setExtent(r, extent(min(lon), max(lon), min(lat), max(lat)))
-    crs(r) <- "+proj=longlat +datum=WGS84 +no_defs"
-    #plot(r)
-    #r
-    r_l = leaflet::projectRasterForLeaflet(log(r))
+    r = get_r()
+    r_type = get_s_type()
     
-    # pal <- colorNumeric(
-    #   "Greens",  # RColorBrewer::display.brewer.all()
-    #   values(r), na.color = "transparent")
-    pal <- colorNumeric('Greens', values(r_l), na.color='transparent')
+    cat(file=stderr(), sprintf('\nrenderLeaflet()\n  r_type:%s\n  sel_grd:%s\n  sel_lyr:%s\n', r_type, input$sel_grd, input$sel_lyr))
+    
+    if (r_type=='chl'){
+      r = log(r)
+      pal         = colorNumeric('Greens', values(r), na.color='transparent')
+      r_group     = 'Chl'
+      r_legend    = 'Chl (mg/m<sup>3</sup>)' 
+      r_transform = function(x) round(exp(x),2)
+    }
+    if (r_type=='seascape'){
+      pal = colorNumeric('Spectral', values(r), na.color='transparent', reverse=T)
+      r_group  = 'Seascape'
+      r_legend = 'Seascape Class'
+      r_transform = function(x) x
+    } 
 
     eez_labels <- sprintf(
       "<strong>%s</strong><br/>%g km<sup>2</sup>",
@@ -55,7 +95,7 @@ shinyServer(function(input, output, session) {
         worldCopyJump=T)) %>%
       addProviderTiles("Esri.OceanBasemap", group='Color Ocean') %>%
       addProviderTiles("Stamen.TonerLite", group='Gray Land') %>%
-      addRasterImage(r_l, colors = pal, opacity = 0.8, project=F, group='Chl') %>%
+      addRasterImage(r, colors = pal, opacity = 0.8, project=F, group=r_group) %>%
       addPolygons(
         data=eez_sf,
         group = 'EEZ',
@@ -76,10 +116,10 @@ shinyServer(function(input, output, session) {
           textsize = "15px",
           direction = "auto")) %>%
       addLegend(
-        pal = pal, values = values(r_l),
+        pal = pal, values = values(r),
         position = 'bottomright',
-        labFormat = labelFormat(transform = function(x) round(exp(x),2)),
-        title = HTML(sprintf('Chl (mg/m^3) for<br>%s', input$sel_var))) %>%
+        labFormat = labelFormat(transform = r_transform),
+        title = HTML(r_legend)) %>%
       #addMeasure() %>%
       addGraticule()  %>%
       addMiniMap(toggleDisplay=T, minimized=T, position='bottomleft')  %>%
@@ -93,25 +133,55 @@ shinyServer(function(input, output, session) {
       addLayersControl(
         baseGroups    = c('Gray Land','Color Ocean'),
         #overlayGroups = c('Chl','Draw'), options = layersControlOptions(collapsed=T)) %>%
-        overlayGroups = c('Chl','EEZ'), options = layersControlOptions(collapsed=T)) 
+        overlayGroups = c(r_group,'EEZ'), options = layersControlOptions(collapsed=T)) 
     
   })
   
   eez4plot = reactiveVal(NULL)
   
-  output$ts_plot = renderDygraph({
-    # TODO: create *_eez-mean-sd.csv & cache
-
+  output$ts_streamgraph = renderStreamgraph({
+    req(input$sel_grd)
+    req(input$sel_lyr)
     req(eez4plot())
-    req(input$sel_var)
+
+    grd = input$sel_grd
+    lyr = input$sel_lyr
+    eez = eez4plot()
+    s = get_s()
+    date = attr(s,'dates')[which(names(s)==lyr)]
+    mo = month(date)
+
+    d_csv = sprintf('%s_eez-area-km2.csv', tools::file_path_sans_ext(grd))
+    d = read_csv(d_csv)
+    d = eez_sf %>%
+      st_set_geometry(NULL) %>%
+      left_join(d, by='MRGID')
+    
+    x = d %>%
+      filter(GeoName=="Spanish Exclusive Economic Zone") %>%
+      select(date, category, area_km2) %>%
+      mutate(
+        area_km2 = round(area_km2, 1))
+    
+    pal = colorNumeric('Spectral', 1:14, na.color='transparent')
+    # TODO: fix palette to match raster -- streamgraph problem
+    streamgraph(x, category, area_km2, date) %>%
+      sg_legend(show=T, label="Class:") %>%
+      sg_fill_manual(pal(1:14))
+  })
+  
+  output$ts_dygraph = renderDygraph({
+    # TODO: create *_eez-mean-sd.csv for other chl files & cache
+    req(input$sel_grd)
+    req(input$sel_lyr)
+    req(eez4plot())
     
     eez = eez4plot()
-    #browser()
-    mo = plyr::mapvalues(
-      input$sel_var,
-      sprintf('%s_chlor_a_clim', month.name),
-      1:12) %>% as.integer()
-    
+    lyr = input$sel_lyr
+    s = get_s()
+    date = attr(s,'dates')[which(names(s)==lyr)]
+    mo = month(date)
+
     #eez = 'Albania'
     nc_path <- "/mbon/data_big/satellite/chlor_a/clim_27km/A20032007_chlor_a_CLIM_MO_GLOB_27km.nc"
     d = read_csv(sprintf('%s_eez-mean-sd.csv', tools::file_path_sans_ext(nc_path)))
@@ -119,7 +189,6 @@ shinyServer(function(input, output, session) {
       st_set_geometry(NULL) %>%
       left_join(d, by='MRGID')
     
-    #View(d) # names(d)
     x = d %>%
       filter(sov_ter==eez) %>%
       dplyr::select(ymd, mean, lwr_sd, upr_sd)
@@ -182,4 +251,5 @@ shinyServer(function(input, output, session) {
         color = 'yellow')
     
   })
+  
 })

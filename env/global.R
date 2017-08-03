@@ -1,11 +1,11 @@
 # load packages, installing if needed ----
 packages = c(
   # general data science
-  'tidyverse','stringr',
+  'tidyverse','stringr','tools','lubridate',
   # spatial
   'sf','leaflet','htmltools', 'bhaskarvk/leaflet.extras','rmapshaper','geojsonio','ncdf4','raster',
   # time-series plot
-  'xts','dygraphs',
+  'xts','dygraphs','hrbrmstr/streamgraph',
   # shiny
   'shiny')
 for (pkg in packages){ # pkg= packages[1] # pkg = 'r-spatial/mapview@develop' # pkg='ropensci/plotly' # pkg='rmapshaper'
@@ -58,6 +58,11 @@ eez_sf = eez_sf %>% # eez$Pol_type %>% table()
   arrange(sov_ter) # View(eez)
 
 
-env_dir = '/mbon/data_big/satellite/chlor_a/clim_27km'
-env_files = list.files(env_dir, '.*\\.nc$')
+chl_dir = '/mbon/data_big/satellite/chlor_a/clim_27km'
+chl_files = list.files(chl_dir, '.*_leaflet\\.grd$')
+chl_paths = file.path(chl_dir, chl_files)
+chl_names = str_sub(chl_files, 1, nchar(chl_files)-12)
 
+grd_choices = list(
+  `Seascapes` = c('GLOBE14_I90VAR3_9k'='/mbon/data_big/satellite/seascapes/gl/GLOBE14_I90VAR3_9k_leaflet.grd'),
+  `Chl` = setNames(chl_paths, chl_names))
