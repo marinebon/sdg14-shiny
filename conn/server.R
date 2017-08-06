@@ -77,8 +77,7 @@ server <- function(input, output, session) {
       addLegend(
         pal = pal, values = values(r_pct), title = "% Larvae",
         labFormat = labelFormat(
-          suffix = '%', between = ', ',
-          transform = function(x) 100 * x))
+          suffix = '%',  transform = function(x) 100 * x))
     
   })
 }

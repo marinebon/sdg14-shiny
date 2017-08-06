@@ -11,7 +11,7 @@ shinyServer(function(input, output, session) {
     attr(s, 'dates') = as_date(names(s), format='ymd_%Y.%m.%d')
     
     # update sel_lyr
-    cat(file=stderr(),'\nupdating sel_lyr: months for new s from sel_grd\n')
+    #cat(file=stderr(),'\nupdating sel_lyr: months for new s from sel_grd\n')
     month_choices = setNames(
       names(s),
       month.abb[month(attr(s, 'dates'))])
@@ -38,7 +38,7 @@ shinyServer(function(input, output, session) {
     req(get_s())
     req(input$sel_lyr %in% names(get_s()))
     
-    cat(file=stderr(), '\nget_r()\n')
+    #cat(file=stderr(), '\nget_r()\n')
     
     s = get_s()
     
@@ -68,7 +68,7 @@ shinyServer(function(input, output, session) {
     r = get_r()
     r_type = get_s_type()
     
-    cat(file=stderr(), sprintf('\nrenderLeaflet()\n  r_type:%s\n  sel_grd:%s\n  sel_lyr:%s\n', r_type, input$sel_grd, input$sel_lyr))
+    #cat(file=stderr(), sprintf('\nrenderLeaflet()\n  r_type:%s\n  sel_grd:%s\n  sel_lyr:%s\n', r_type, input$sel_grd, input$sel_lyr))
     
     if (r_type=='chl'){
       r = log(r)
@@ -158,7 +158,8 @@ shinyServer(function(input, output, session) {
       left_join(d, by='MRGID')
     
     x = d %>%
-      filter(GeoName=="Spanish Exclusive Economic Zone") %>%
+      #filter(GeoName=="Spanish Exclusive Economic Zone") %>%
+      filter(sov_ter==eez) %>%
       select(date, category, area_km2) %>%
       mutate(
         area_km2 = round(area_km2, 1))
