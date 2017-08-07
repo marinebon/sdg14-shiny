@@ -6,7 +6,8 @@ shinyUI(fluidPage(
     
     sidebarPanel(
       selectInput('sel_dir','Direction',c('Import','Export')),
-      actionButton("update", "Update")),
+      checkboxInput('ck_self','Self-recruitment')),
+      #actionButton("update", "Update")),
     
     mainPanel(
       leafletOutput("map")))
