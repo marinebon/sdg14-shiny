@@ -3,6 +3,8 @@ server <- function(input, output, session) {
 
   output$map <- renderLeaflet({
     
+    r_pid = get_r_pid()
+    
     pal = colorNumeric('Spectral', values(r_pid), reverse=T, na.color='transparent')
     
     leaflet() %>%
@@ -24,8 +26,40 @@ server <- function(input, output, session) {
 
   })
   
+  get_conn_tbl = reactive({
+    buf = str_split(input$sel_buf_cel, '/')[[1]][1] %>% as.integer()
+    cel = str_split(input$sel_buf_cel, '/')[[1]][2] %>% as.integer()
+    
+    #cat(file=stderr(), list(dir_root, input$sel_sanctuary, input$sel_yr, input$sel_pld, buf, cel, input$sel_date, input$sel_sanctuary, input$sel_pld, buf, cel))
+    #browser()
+    conn_csv = sprintf(
+      '%s/%s_%d/%dday_%dbuf-%dkm/%s_%s_%dday_%dbuf-%dkm_results/connectivity.csv',
+      dir_root, input$sel_sanctuary, 
+      as.integer(input$sel_yr), as.integer(input$sel_pld), 
+      buf, cel, 
+      input$sel_date, input$sel_sanctuary, 
+      as.integer(input$sel_pld), 
+      buf, cel)
+    
+    read_csv(conn_csv) %>% 
+      as_tibble()
+  })
+  
+  get_r_pid = reactive({
+    buf = str_split(input$sel_buf_cel, '/')[[1]][1] %>% as.integer()
+    cel = str_split(input$sel_buf_cel, '/')[[1]][2] %>% as.integer()
+    
+    pid_tif = sprintf(
+      '%s/habitats/%s_%dbuf-%dkm_patchid.tif',
+      dir_root, input$sel_sanctuary, buf, cel)
+    
+    raster(pid_tif)
+  })
 
   observeEvent(input$map_draw_stop,{
+    
+    conn_tbl = get_conn_tbl()
+    r_pid    = get_r_pid()
     
     ply = input$map_draw_new_feature %>%
       as.json() %>% geojson_sp()
@@ -33,23 +67,23 @@ server <- function(input, output, session) {
     #browser()
     
     r_ply = raster::extract(r_pid, ply, cellnumbers=T)[[1]]
-    i_r = r_ply[,'cell']
     sel_patchids = r_ply[,'value']
     
-    r_hi = r_pid
-    r_hi[setdiff(1:ncell(r_pid), i_r)] = NA
+    #r_hi = r_pid
+    #r_hi[setdiff(1:ncell(r_pid), i_r)] = NA
 
     #conn_lns = readOGR(file.path(dir_results, 'output.gdb'), 'Connectivity', verbose=F)
-    conn = read_csv(file.path(dir_results, 'connectivity.csv')) %>%  as_tibble()
+    
     
     #/Volumes/Best HD/mbon_data_big/connectivity/mbnms_2009/10day_300buf-27km/01_25_2009_mbnms_10day_300buf-27km_results/connectivity.csv
     #/Volumes/Best HD/mbon_data_big/connectivity/fknms_2009/10day_300buf-27km/01_25_2009_fknms_10day_300buf-27km_results/connectivity.csv
+    
     
     # Import first...
     if (input$sel_dir == 'Import'){
       
       #conn_tbl = conn_lns@data %>%
-      conn_tbl = conn %>%
+      conn_tbl = conn_tbl %>%
         filter(ToPatchID %in% sel_patchids)
       
       #browser()
@@ -69,7 +103,7 @@ server <- function(input, output, session) {
       
     } else {
       
-      conn_tbl = conn %>%
+      conn_tbl = conn_tbl %>%
         filter(FromPatchID %in% sel_patchids)
       
       if (!input$ck_self){
