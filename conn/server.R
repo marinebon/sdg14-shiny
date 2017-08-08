@@ -66,7 +66,8 @@ server <- function(input, output, session) {
     # ply = read_sf('tmp_ply.geojson') %>% as('Spatial')
 
     r_ply = raster::extract(r_pid, ply, cellnumbers=T)[[1]]
-    sel_patchids = r_ply[,'value']
+    sel_patchids = r_ply[,'value'] %>% na.omit()
+    req(length(sel_patchids) > 0)
 
     if (input$sel_dir == 'Import'){
       
