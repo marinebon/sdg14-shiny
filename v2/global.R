@@ -7,7 +7,7 @@ packages = c(
   # time-series plot
   'xts','dygraphs','hrbrmstr/streamgraph',
   # shiny
-  'shiny')
+  'shiny','shinydashboard')
 for (pkg in packages){ # pkg= packages[1] # pkg = 'r-spatial/mapview@develop' # pkg='ropensci/plotly' # pkg='rmapshaper'
   github_pkg = grepl('/', pkg)
   p = ifelse(github_pkg, sub('([-0-9A-Za-z]*)/([-0-9A-Za-z]*)@?([-0-9A-Za-z]*)', '\\2', pkg), pkg)
