@@ -32,14 +32,14 @@ if (!file.exists(eez_s005005_shp)){
   library(geojsonio)
   eez_s005 = read_sf(eez_s005_shp) # plot(eez_s005['Territory1'])
   #object.size(eez_s005) %>% print(units='Mb') # 11.1 Mb
-
+  
   # simplify eez
   eez_s005005 = eez_s005 %>%
     geojson_json() %>% # convert to geojson for faster ms_simplify; 69.6 sec
     ms_simplify(keep=0.05, keep_shapes=T, explode=F) %>% # simplify; 11.9 minutes
     geojson_sp() %>% st_as_sf() # convert back to simple features
   # plot(eez_s005005['Territory1'])
-
+  
   write_sf(eez_s005005, eez_s005005_shp)
 }
 eez_sf = read_sf(eez_s005005_shp) # plot(eez['Territory1'])
@@ -58,11 +58,17 @@ eez_sf = eez_sf %>% # eez$Pol_type %>% table()
   arrange(sov_ter) # View(eez)
 
 
-chl_dir = '/mbon/data_big/satellite/chlor_a/clim_27km'
+dir_root = switch(
+  Sys.info()[['sysname']],
+  'Darwin'  = '/Volumes/Best HD/mbon_data_big', # BB's Mac
+  'Windows' = 'P:',                                          # constance.bren.ucsb.edu
+  'Linux'   = '/mbon/data_big')                 # mbon.marine.usf.edu
+
+chl_dir = file.path(dir_root, 'satellite/chlor_a/clim_27km')
 chl_files = list.files(chl_dir, '.*_leaflet\\.grd$')
 chl_paths = file.path(chl_dir, chl_files)
 chl_names = str_sub(chl_files, 1, nchar(chl_files)-12)
 
 grd_choices = list(
-  `Seascapes` = c('GLOBE14_I90VAR3_9k'='/mbon/data_big/satellite/seascapes/gl/GLOBE14_I90VAR3_9k_leaflet.grd'),
+  `Seascapes` = c('GLOBE14_I90VAR3_9k'=file.path(dir_root, 'satellite/seascapes/gl/GLOBE14_I90VAR3_9k_leaflet.grd')),
   `Chl` = setNames(chl_paths, chl_names))

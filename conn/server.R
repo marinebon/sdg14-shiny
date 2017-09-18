@@ -39,6 +39,8 @@ server <- function(input, output, session) {
       as.integer(input$sel_pld), 
       buf, cel)
     
+    browser()
+    
     if(!file.exists(conn_csv)) stop(sprintf('CSV not found: %s', conn_csv))
     read_csv(conn_csv) %>% 
       as_tibble()

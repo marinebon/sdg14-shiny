@@ -5,6 +5,10 @@ shinyServer(function(input, output, session) {
   get_s = reactive({
     req(input$sel_grd)
     
+    #browser()
+    
+    if (!file.exists(input$sel_grd)) stop(sprintf('Raster does not exist: %s', input$sel_grd))
+    
     s = stack(input$sel_grd)
     
     # dates
@@ -52,8 +56,9 @@ shinyServer(function(input, output, session) {
   })
   
   output$ui_lyr <- renderUI({
-    req(get_s())
+    req(input$sel_grd)
     
+    #browser()
     s = get_s()
 
     month_choices = setNames(
