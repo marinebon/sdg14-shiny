@@ -21,7 +21,10 @@ for (pkg in packages){ # pkg= packages[1] # pkg = 'r-spatial/mapview@develop' # 
     library(p, character.only=T)
   }
 }
-select = dplyr::select
+# override namespace with preferred function calls
+select    = dplyr::select
+addLegend = leaflet::addLegend
+
 
 if (basename(getwd())!='v2') setwd('v2')
 

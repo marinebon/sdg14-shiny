@@ -21,7 +21,10 @@ for (pkg in packages){ # pkg= packages[1] # pkg = 'r-spatial/mapview@develop' # 
     library(p, character.only=T)
   }
 }
-select = dplyr::select
+# override namespace with preferred function calls
+select    = dplyr::select
+addLegend = leaflet::addLegend
+
 
 if (basename(getwd())!='env') setwd('env')
 
@@ -58,11 +61,17 @@ eez_sf = eez_sf %>% # eez$Pol_type %>% table()
   arrange(sov_ter) # View(eez)
 
 
-chl_dir = '/mbon/data_big/satellite/chlor_a/clim_27km'
+dir_root = switch(
+  Sys.info()[['sysname']],
+  'Darwin'  = '/Volumes/Best HD/mbon_data_big', # BB's Mac
+  'Windows' = 'P:',                                          # constance.bren.ucsb.edu
+  'Linux'   = '/mbon/data_big')                 # mbon.marine.usf.edu
+
+chl_dir = file.path(dir_root, 'satellite/chlor_a/clim_27km')
 chl_files = list.files(chl_dir, '.*_leaflet\\.grd$')
 chl_paths = file.path(chl_dir, chl_files)
 chl_names = str_sub(chl_files, 1, nchar(chl_files)-12)
 
 grd_choices = list(
-  `Seascapes` = c('GLOBE14_I90VAR3_9k'='/mbon/data_big/satellite/seascapes/gl/GLOBE14_I90VAR3_9k_leaflet.grd'),
+  `Seascapes` = c('GLOBE14_I90VAR3_9k'=file.path(dir_root, 'satellite/seascapes/gl/GLOBE14_I90VAR3_9k_leaflet.grd')),
   `Chl` = setNames(chl_paths, chl_names))

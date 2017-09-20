@@ -75,19 +75,21 @@ shinyServer(function(input, output, session) {
       pal         = colorNumeric('Greens', values(r), na.color='transparent')
       r_group     = 'Chl'
       r_legend    = 'Chl (mg/m<sup>3</sup>)' 
-      r_transform = function(x) round(exp(x),2)
+      r_transform = function(x){ round(exp(x),2) }
     }
     if (r_type=='seascape'){
       pal = colorNumeric('Spectral', values(r), na.color='transparent', reverse=T)
       r_group  = 'Seascape'
       r_legend = 'Seascape Class'
-      r_transform = function(x) x
+      r_transform = function(x){ x }
     } 
 
     eez_labels <- sprintf(
       "<strong>%s</strong><br/>%g km<sup>2</sup>",
       eez_sf$Territory1, eez_sf$Area_km2
     ) %>% lapply(HTML)
+    
+    #browser()
     
     leaflet(
       options=leafletOptions(
