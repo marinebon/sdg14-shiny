@@ -1,5 +1,7 @@
 # TODO: seascapes, per https://marinebon.github.io/seascape-viz/prep.html & /mbon/data_big/satellite/seascapes/*
 
+source('global.R')
+
 # user interface, enableBookmarking
 ui <- function(request) {
   dashboardPage(
@@ -28,7 +30,7 @@ ui <- function(request) {
         #background='#1e282c', width=8,
         #HTML('Filter'), 
         selectInput('sel_grd', 'Variable', grd_choices, multiple=F),
-        uiOutput('ui_lyr'),               
+        uiOutput('ui_lyr'),
         selectizeInput('sel_eez', 'EEZ - Territory', c('', eez_sf$sov_ter), selected='')),
       box(
       #   background='#1e282c', width=8,
@@ -36,15 +38,17 @@ ui <- function(request) {
         style = "background-color: #1e282c;", width=12,        
         #HTML('Output'),
         actionButton('btn_save', 'Save Plot', icon=icon('save')),
+        tags$div(id='ui_plots'),
         conditionalPanel(
-          condition = "input.sel_plots!=''",
-          selectizeInput('sel_plots', 'Plots', choices=''),
+          condition = "input.sel_plots != null",               
           div(
             style='margin: 6px 5px 6px 15px;',
             #class='section.sidebar shiny-bound-input.action-link',
+            actionButton('btn_open_plot', 'Open Plot', icon=icon('folder-open-o')),
             dropdownButton(
               label = 'Download Report', icon=icon('file-o'), circle=F, size='sm',
-              actionButton('btn_download_url', 'Bookmark (url)', icon=icon('bookmark-o')),
+              bookmarkButton(id='btn_bookmark'),
+              #actionButton('btn_download_url', 'Bookmark (url)', icon=icon('bookmark-o')),
               actionButton('btn_download_pdf', 'Portable (*.pdf)', icon=icon('file-pdf-o')),
               actionButton('btn_download_doc', 'Word (*.docx)', icon=icon('file-word-o')),
               actionButton('btn_download_htm', 'Web (*.html)', icon=icon('file-text-o')),
@@ -54,10 +58,12 @@ ui <- function(request) {
         tabBox(
           id = 'tabset_viz', width=12,
           tabPanel(
-            tagList(icon('globe'), 'Spatial'),
+            #tagList(icon('globe'), 'Spatial'),
+            'Spatial',
             leafletOutput('map', height = 550)),
           tabPanel(
-            tagList(icon('line-chart'), 'Temporal'),
+            #tagList(icon('line-chart'), 'Temporal'),
+            'Temporal',
             conditionalPanel(
               condition = "output.grd_type=='chl'",
               dygraphOutput('ts_dygraph')),
@@ -84,6 +90,11 @@ ui <- function(request) {
 #shinyServer(function(input, output, session) {
 server <- function(input, output, session) {
     
+  # Need to exclude the buttons from themselves being bookmarked
+  setBookmarkExclude(c(
+    'btn_bookmark','btn_save','btn_save_plot',
+    'btn_download_doc','btn_download_htm','btn_download_pdf','btn_download_rmd'))
+  
   get_s = reactive({
     req(input$sel_grd)
     
@@ -173,6 +184,15 @@ server <- function(input, output, session) {
     
     #browser()
     
+    if (length(input$sel_eez) == 1 && input$sel_eez == ''){
+      b = st_bbox(eez_sf)
+    } else {
+      b = st_bbox(
+        eez_sf %>%
+          filter(sov_ter %in% input$sel_eez)) # %>%
+      # st_transform(crs_mol))
+    }
+    
     leaflet(
       options=leafletOptions(
         minZoom=2,
@@ -217,20 +237,31 @@ server <- function(input, output, session) {
       addLayersControl(
         baseGroups    = c('Gray Land','Color Ocean'),
         #overlayGroups = c('Chl','Draw'), options = layersControlOptions(collapsed=T)) %>%
-        overlayGroups = c(r_group,'EEZ'), options = layersControlOptions(collapsed=T)) 
-    
+        overlayGroups = c(r_group,'EEZ'), options = layersControlOptions(collapsed=T)) %>%
+    #leafletProxy('map', session) %>%
+      fitBounds(b[['xmin']], b[['ymin']], b[['xmax']], b[['ymax']]) %>%
+      clearGroup('eez_hi') %>%
+      addPolygons(
+        data = eez_sf %>%
+          filter(sov_ter %in% input$sel_eez),
+        group = 'eez_hi',
+        fill = F,
+        weight = 4,
+        color = 'yellow')
   })
   
-  eez4plot = reactiveVal(NULL)
+  #eez4plot = reactiveVal(NULL)
   
   output$ts_streamgraph = renderStreamgraph({
     req(input$sel_grd)
     req(input$sel_lyr)
-    req(eez4plot())
+    #req(eez4plot())
+    req(input$sel_eez)
 
     grd = input$sel_grd
     lyr = input$sel_lyr
-    eez = eez4plot()
+    #eez = eez4plot()
+    eez = input$sel_eez
     s = get_s()
     date = attr(s,'dates')[which(names(s)==lyr)]
     mo = month(date)
@@ -259,9 +290,11 @@ server <- function(input, output, session) {
     # TODO: create *_eez-mean-sd.csv for other chl files & cache
     req(input$sel_grd)
     req(input$sel_lyr)
-    req(eez4plot())
+    #req(eez4plot())
+    req(input$sel_eez)
     
-    eez = eez4plot()
+    #eez = eez4plot()
+    eez = input$sel_eez
     lyr = input$sel_lyr
     s = get_s()
     date = attr(s,'dates')[which(names(s)==lyr)]
@@ -302,40 +335,50 @@ server <- function(input, output, session) {
     # TODO: _mouseover, _mouseout
     updateSelectizeInput(session, 'sel_eez', 'EEZ - Territory', c('', eez_sf$sov_ter), input$map_shape_click[['id']])
   })
-
-  observeEvent(input$map_shape_mouseover, {
-    eez4plot(input$map_shape_mouseover[['id']])
+  
+  observeEvent(input$btn_open_plot, {
+    
   })
+  
+  #observeEvent(input$map_shape_mouseover, {
+  #  eez4plot(input$map_shape_mouseover[['id']])
+  #})
 
   # observeEvent(input$map_shape_mouseout, {
   #   eez4plot(NULL)
   # })
     
-  observeEvent(input$sel_eez, {
-    
-    eez4plot(input$sel_eez)
-    
-    if (length(input$sel_eez) == 1 && input$sel_eez == ''){
-      b = st_bbox(eez_sf)
-    } else {
-      b = st_bbox(
-        eez_sf %>%
-          filter(sov_ter %in% input$sel_eez)) # %>%
-      # st_transform(crs_mol))
-    }
-    
-    leafletProxy('map', session) %>%
-      fitBounds(b[['xmin']], b[['ymin']], b[['xmax']], b[['ymax']]) %>%
-      clearGroup('eez_hi') %>%
-      addPolygons(
-        data = eez_sf %>%
-          filter(sov_ter %in% input$sel_eez),
-        group = 'eez_hi',
-        fill = F,
-        weight = 4,
-        color = 'yellow')
-    
-  })
+  # observeEvent(input$sel_eez, {
+  #   
+  #   cat(file=stderr(), sprintf('observeEvent(input$sel_eez: %s\n', input$sel_eez))
+  #   
+  #   eez4plot(input$sel_eez)
+  #   
+  #   #cat(file=stderr(), '... eez4plot(input$sel_eez)\n')
+  #   
+  #   browser() 
+  #   
+  #   if (length(input$sel_eez) == 1 && input$sel_eez == ''){
+  #     b = st_bbox(eez_sf)
+  #   } else {
+  #     b = st_bbox(
+  #       eez_sf %>%
+  #         filter(sov_ter %in% input$sel_eez)) # %>%
+  #     # st_transform(crs_mol))
+  #   }
+  #   
+  #   leafletProxy('map', session) %>%
+  #     fitBounds(b[['xmin']], b[['ymin']], b[['xmax']], b[['ymax']]) %>%
+  #     clearGroup('eez_hi') %>%
+  #     addPolygons(
+  #       data = eez_sf %>%
+  #         filter(sov_ter %in% input$sel_eez),
+  #       group = 'eez_hi',
+  #       fill = F,
+  #       weight = 4,
+  #       color = 'yellow')
+  #   
+  # })
   
   observeEvent(input$btn_save, {
     
@@ -350,18 +393,99 @@ server <- function(input, output, session) {
 
   })
   
-  saved_plots <<- c()
+  observeEvent(input$btn_bookmark, {
+    session$doBookmark()
+  })
   
+  values = reactiveValues(saved_plots = list())
+  
+  observeEvent(values$saved_plots, {
+    req(!is_empty(values$saved_plots))
+    
+    removeUI(selector = '#ui_plots_sel')
+    
+    insertUI(
+      selector = '#ui_plots',
+      ui = tags$div(
+        id = 'ui_plots_sel',
+        selectInput('sel_plots', 'Plots', names(values$saved_plots), selectize=F, size=length(values$saved_plots))))
+  })
+  
+  observeEvent(input$btn_open_plot, {
+    req(input$sel_plots)
+    
+    #browser()
+    url_plot = values$saved_plots[[input$sel_plots]][['url']]
+    browseURL(url_plot)
+    
+  })
+    
   observeEvent(input$btn_save_plot, {
+    # session$doBookmark() -- without showBookmarkUrlModal(url)
+    state <- shiny:::ShinySaveState$new(
+      input = session$input, exclude = session$getBookmarkExclude())
+    state$values$saved_plots <- values$saved_plots
+    url <- shiny:::saveShinySaveState(state)
     
-    saved_plots <<- c(saved_plots, input$txt_plot_title)
+    clientData <- session$clientData
+    url <- paste0(
+      clientData$url_protocol, "//", clientData$url_hostname, 
+      if (nzchar(clientData$url_port)) 
+        paste0(":", clientData$url_port), clientData$url_pathname, 
+      "?", url)
     
-    updateSelectInput(session, 'sel_plots', choices=saved_plots)
+    #browser()
+    values$saved_plots <- c(values$saved_plots, setNames(list(list('url'=url, 'caption'=input$txt_plot_caption)), input$txt_plot_title))
+    cat(file=stderr(), c('values$saved_plots', str(values$saved_plots)))
+    
+    cat(file=stderr(), sprintf('bookmark url: %s\n', url))
+    # readr::read_rds('./env2/shiny_bookmarks/a21fc9fd15caf506/input.rds')
+    #browser()
     
     removeModal()
-
   })
+  
+  # onRestore(function(state) {
+  #   #cat("Restoring from state bookmarked at", state$values$time, "\n")
+  #   bkmrk_id = getQueryString()$`_state_id_`
+  #   # bkmrk_id = '2fdd1702249423f1'; # http://127.0.0.1:3203/?_state_id_=2fdd1702249423f1
+  #   input_rds = sprintf('./env2/shiny_bookmarks/%s/input.rds', bkmrk_id)
+  #   input_bkmrk = readr::read_rds(input_rds)
+  #   #browser()
+  # })
+  
+  onBookmark(function(state) {
+    #browser()
+    state$values$saved_plots <- values$saved_plots
+  })
+  
+  onRestore(function(state) {
+    #browser()
+    #values$saved_plots <- state$values$saved_plots
+    #updateSelectInput(session, 'sel_eez', selected=NULL)
+  })
+  
+  onRestored(function(state) {
+    # http://127.0.0.1:3203/?_state_id_=2fdd1702249423f1
+
+    #updateSelectInput(session, 'sel_grd', selected=NULL)
+    #updateSelectInput(session, 'sel_lyr', selected=NULL)
+    cat(file=stderr(), 'onRestored...\n')
+    #updateSelectInput(session, 'sel_eez', selected='')
+    
+    #browser()
+    #session$reload()
+    
+    # updateSelectInput(session, 'sel_grd', selected=state$input$sel_grd)
+    # updateSelectInput(session, 'sel_lyr', selected=state$input$sel_lyr)
+    # updateSelectInput(session, 'sel_eez', selected=state$input$sel_eez)
+    #updateSelectInput(session, 'sel_eez', selected='Algeria')
+    
+    values$saved_plots <- state$values$saved_plots
+    
+  })
+  
   
 }
 
-shinyApp(ui, server, enableBookmarking='url')
+shinyApp(ui, server, enableBookmarking='server')

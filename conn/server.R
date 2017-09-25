@@ -39,7 +39,7 @@ server <- function(input, output, session) {
       as.integer(input$sel_pld), 
       buf, cel)
     
-    browser()
+    cat(file=stderr(), sprintf('conn_csv: %s\n', conn_csv))
     
     if(!file.exists(conn_csv)) stop(sprintf('CSV not found: %s', conn_csv))
     read_csv(conn_csv) %>% 
