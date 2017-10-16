@@ -28,4 +28,5 @@ dashboardPage(
           sliderInput(
             'sel_ym', 'Date:', 
             min = dates[length(dates)], max = dates[1], value = dates[1],
-            step = 30, animate = T, timeFormat='%b %Y', width='100%'))))))
+            step = 30, animate = animationOptions(interval = 2000), 
+            timeFormat='%b %Y', width='100%'))))))
