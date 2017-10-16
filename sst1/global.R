@@ -3,6 +3,7 @@ library(tidyverse)
 library(stringr)
 library(leaflet)
 library(shiny)
+library(shinydashboard)
 library(xml2)
 
 dir_wd = 'sst1'
@@ -28,3 +29,21 @@ dates = read_xml(wms_url) %>%
   str_sub(1,10) %>%
   sort(decreasing=T) %>%
   as.Date()
+
+# TODO: other env: chl, sst 9km
+# [Using the ImageMosaic extension — GeoServer 2.13.x User Manual](http://docs.geoserver.org/latest/en/user/data/raster/imagemosaic/tutorial.html)
+
+# TODO: WMS legend
+# http://mbon.marine.usf.edu:8080/geoserver/wms?REQUEST=GetLegendGraphic&VERSION=1.3.0&FORMAT=image/png&WIDTH=20&HEIGHT=20&LAYER=satellite:sst_monthly_mean_27km
+# https://github.com/bhaskarvk/leaflet.extras/blob/master/inst/examples/wmsLegend.R
+
+# TODO: optimize caching params
+# http://docs.geoserver.org/stable/en/user/geowebcache/webadmin/defaults.html
+
+# TODO: dynamic GeoServer layer creation/deletion
+# [CRAN - Package geosapi](https://cran.r-project.org/web/packages/geosapi/index.html)
+
+# TODO: update password for postgis docker, geoserver admin
+
+# TODO: vector tile EEZ
+# [Vector tiles tutorial — GeoServer 2.13.x User Manual](http://docs.geoserver.org/latest/en/user/extensions/vectortiles/tutorial.html)
