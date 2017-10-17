@@ -13,11 +13,13 @@ shinyServer(function(input, output, session) {
   })
   
   get_dates  = reactive({
+    req(input$sel_menu)
+    
     vars[[input$sel_menu]][['curr_dates']]
   })
   
   observe({
-    
+    req(input$sel_menu)
     dates = get_dates()
     
     updateSliderInput(
@@ -27,10 +29,12 @@ shinyServer(function(input, output, session) {
   })
   
   observe({
+    req(input$sel_menu)
+    req(input$sel_ym)
 
     # ensure date match with time slice
     ymd =  sprintf('%s-15', str_sub(as.character(input$sel_ym), 1,7))
-    cat(file=stderr(), sprintf('ymd: %s\n', ymd))
+    #cat(file=stderr(), sprintf('ymd: %s\n', ymd))
     
     # update WMSTile
     leafletProxy('map') %>%
