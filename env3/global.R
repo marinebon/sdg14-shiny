@@ -48,8 +48,8 @@ vars = list(
     curr_lyr   = 'gl_sst_curr_09km_mo',
     curr_dates = get_wms_dates(xml, 'gl_sst_curr_09km_mo')))
 
-lyr   = vars[['seascape']][['curr_lyr']]
-dates = vars[['seascape']][['curr_dates']]
+# default layer
+var   = 'sst'
 
 # TODO: extract timeseries by EEZ
 
