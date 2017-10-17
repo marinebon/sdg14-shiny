@@ -4,20 +4,20 @@ dashboardPage(
     title=tagList(icon('tint'), 'SDG14: Life in the Sea'),
     titleWidth = 250),
   dashboardSidebar(
-    width = 250,
+    width = 250, 
     sidebarMenu(
-      #id = 'menu_var',
+      id = 'sel_menu',
       menuItem(
         text='Environmental', icon=icon('thermometer'), tabName='env', selected=T, startExpanded=T,
         menuSubItem(
-          'Seascape', tabName='seascape', icon=icon("angle-double-right"), selected=T),
+          'Seascape', tabName='seascape', icon=icon("angle-double-right")),
         menuSubItem(
-          'Temperature', tabName='sst', icon=icon("angle-double-right")),
+          'Temperature', tabName='sst', icon=icon("angle-double-right"), selected=T),
         menuSubItem(
-          'Chlorophyll', tabName='chl', icon=icon("angle-double-right"))),
-      selectInput(
-        'sel_temporal', 'Temporal:', 
-        c('Contemporaneous','Climatological')))),
+          'Chlorophyll', tabName='chl', icon=icon("angle-double-right"))))),
+      #selectInput(
+        # 'sel_temporal', 'Temporal:', 
+        # c('Contemporaneous','Climatological')))),
   dashboardBody(
     fluidRow(
       tabBox(
