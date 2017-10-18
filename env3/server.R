@@ -148,6 +148,7 @@ shinyServer(function(input, output, session) {
   # env_ts_streamgraph ----
   output$env_ts_streamgraph = renderStreamgraph({
     req(input$sel_eez)
+    req(get_var()=='seascape')
     
     x = get_env_eez() %>%
       mutate(
@@ -165,6 +166,7 @@ shinyServer(function(input, output, session) {
   # env_ts_dygraph ----
   output$env_ts_dygraph = renderDygraph({
     req(input$sel_eez)
+    req(get_var()!='seascape')
     
     x = get_env_eez() %>%
       mutate(
