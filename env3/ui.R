@@ -6,9 +6,9 @@ dashboardPage(
   dashboardSidebar(
     width = 250, 
     sidebarMenu(
-      id = 'sel_menu',
+      id = 'sel_var',
       menuItem(
-        text='Environmental', icon=icon('thermometer'), tabName='env', selected=T, startExpanded=T,
+        text='Environmental', icon=icon('thermometer'), tabName='env', startExpanded=T,
         menuSubItem(
           'Seascape', tabName='seascape', icon=icon("angle-double-right")),
         menuSubItem(

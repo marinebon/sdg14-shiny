@@ -6,6 +6,8 @@ library(shiny)
 library(shinydashboard)
 library(xml2)
 
+options(shiny.sanitize.errors = F)
+
 dir_wd = 'env3'
 if (basename(getwd())!=dir_wd) setwd(dir_wd)
 
@@ -48,8 +50,9 @@ vars = list(
     curr_lyr   = 'gl_sst_curr_09km_mo',
     curr_dates = get_wms_dates(xml, 'gl_sst_curr_09km_mo')))
 
-lyr   = vars[['seascape']][['curr_lyr']]
-dates = vars[['seascape']][['curr_dates']]
+# default layer
+var   = 'sst'
+dates = vars[[var]][['curr_dates']]
 
 # TODO: extract timeseries by EEZ
 
