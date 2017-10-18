@@ -8,13 +8,13 @@ dashboardPage(
     sidebarMenu(
       id = 'sel_var',
       menuItem(
-        text='Environmental', icon=icon('thermometer'), tabName='env', startExpanded=T,
+        text='Environmental', icon=icon('thermometer'), startExpanded=T, expandedName='env',
         menuSubItem(
-          'Seascape', tabName='seascape', icon=icon("angle-double-right")),
+          tabName='seascape', text='Seascape', icon=icon("angle-double-right")),
         menuSubItem(
-          'Temperature', tabName='sst', icon=icon("angle-double-right"), selected=T),
+          tabName='sst', text='Temperature', icon=icon("angle-double-right"), selected=T),
         menuSubItem(
-          'Chlorophyll', tabName='chl', icon=icon("angle-double-right"))))),
+          tabName='chl', text='Chlorophyll', icon=icon("angle-double-right"))))),
       #selectInput(
         # 'sel_temporal', 'Temporal:', 
         # c('Contemporaneous','Climatological')))),

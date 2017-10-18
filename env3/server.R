@@ -2,7 +2,7 @@ shinyServer(function(input, output, session) {
   
   # leaflet map, initial ----
   output$map <- renderLeaflet({
-    #cat('renderLeaflet()\n', file=stdout())
+    cat('renderLeaflet()\n', file=stderr())
     
     leaflet(
       options=c(
@@ -17,25 +17,14 @@ shinyServer(function(input, output, session) {
         group = 'env', layers = vars[[var]][['curr_lyr']],
         options = WMSTileOptions(
           version = '1.3.0', format  = 'image/png', transparent = T,
-          time    = vars[[var]][['curr_dates']][1]))
+          time    = dates[1]))
     
-  })
-  
-  # get_dates() ----
-  get_dates  = reactive({
-    req(input$sel_var)
-    #cat('get_dates()\n', file=stdout())
-    
-    vars[[input$sel_var]][['curr_dates']]
   })
   
   # update sel_ym ----
   observe({
-    
-    req(input$sel_var)
-    
-    dates = get_dates()
-    #cat('updateSliderInput()\n', file=stdout())
+    dates = vars[[input$sel_var]][['curr_dates']]
+    cat('updateSliderInput()\n', file=stderr())
     
     updateSliderInput(
       session, 'sel_ym', 'Date:', 
@@ -47,11 +36,11 @@ shinyServer(function(input, output, session) {
   observe({
     req(input$sel_var)
     req(input$sel_ym)
-    #cat('leafletProxy()\n', file=stdout())
+    cat('leafletProxy()\n', file=stderr())
 
     # ensure date match with time slice
     ymd =  sprintf('%s-15', str_sub(as.character(input$sel_ym), 1,7))
-    #cat(file=stderr(), sprintf('ymd: %s\n', ymd))
+    cat(file=stderr(), sprintf('  input$sel_var=%s, input$sel_ym=%s, ymd=%s\n', input$sel_var, input$sel_ym, ymd))
     
     # update env WMSTile
     leafletProxy('map') %>%
