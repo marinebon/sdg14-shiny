@@ -23,6 +23,8 @@ shinyServer(function(input, output, session) {
   
   # update sel_ym ----
   observe({
+    req(input$sel_var)
+    
     dates = vars[[input$sel_var]][['curr_dates']]
     cat('updateSliderInput()\n', file=stderr())
     
