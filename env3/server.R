@@ -1,5 +1,6 @@
 shinyServer(function(input, output, session) {
   
+  # leaflet map, initial ----
   output$map <- renderLeaflet({
     #cat('renderLeaflet()\n', file=stdout())
     
@@ -10,6 +11,7 @@ shinyServer(function(input, output, session) {
           worldCopyJump=T),
         attributionControl=F)) %>%
       addProviderTiles("Stamen.TonerLite", group='Gray Land') %>% 
+      # initial env WMSTile
       addWMSTiles(
         baseUrl = 'http://mbon.marine.usf.edu:8080/geoserver/satellite/wms',
         group = 'env', layers = vars[[var]][['curr_lyr']],
@@ -19,6 +21,7 @@ shinyServer(function(input, output, session) {
     
   })
   
+  # get_dates() ----
   get_dates  = reactive({
     req(input$sel_var)
     #cat('get_dates()\n', file=stdout())
@@ -26,7 +29,11 @@ shinyServer(function(input, output, session) {
     vars[[input$sel_var]][['curr_dates']]
   })
   
+  # update sel_ym ----
   observe({
+    
+    req(input$sel_var)
+    
     dates = get_dates()
     #cat('updateSliderInput()\n', file=stdout())
     
@@ -36,6 +43,7 @@ shinyServer(function(input, output, session) {
       value = dates[1])
   })
   
+  # update env WMSTiles ----
   observe({
     req(input$sel_var)
     req(input$sel_ym)
@@ -45,7 +53,7 @@ shinyServer(function(input, output, session) {
     ymd =  sprintf('%s-15', str_sub(as.character(input$sel_ym), 1,7))
     cat(file=stderr(), sprintf('ymd: %s\n', ymd))
     
-    # update WMSTile
+    # update env WMSTile
     leafletProxy('map') %>%
       clearGroup('env') %>% 
       addWMSTiles(

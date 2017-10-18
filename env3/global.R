@@ -7,6 +7,7 @@ library(shinydashboard)
 library(xml2)
 
 options(shiny.sanitize.errors = F)
+options(shiny.trace=T)
 
 dir_wd = 'env3'
 if (basename(getwd())!=dir_wd) setwd(dir_wd)
@@ -16,11 +17,6 @@ dir_root = switch(
   'Darwin'  = '/Volumes/Best HD/mbon_data_big', # BB's Mac
   'Windows' = 'P:',                                          # constance.bren.ucsb.edu
   'Linux'   = '/mbon/data_big')                 # mbon.marine.usf.edu
-
-# sst_dir   = file.path(dir_root, 'satellite/sst4/anom_27km')
-# sst_files = list.files(sst_dir, 'sst_.*\\.tif$')
-#lyr = 'satellite:sst_monthly_mean_27km'
-#lyr = 'satellite:gl_sst_curr_09km_mo'
 
 # get dates from WMS layer time list
 wms_url = 'http://mbon.marine.usf.edu:8080/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities'
