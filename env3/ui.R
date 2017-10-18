@@ -1,5 +1,5 @@
 dashboardPage(
-  title = 'SDG14: env WMS prototype',
+  title = 'SDG14: Life in the Sea',
   dashboardHeader(
     title=tagList(icon('tint'), 'SDG14: Life in the Sea'),
     titleWidth = 250),
@@ -18,10 +18,16 @@ dashboardPage(
       radioButtons(
         'sel_bio_var', label=NULL,
         choices = list(
-          'Species Richness'='n_spp',
-          '# of Observations'='n_obs',
-          'Protection Metric'='idx_obis_wdpa'),
-        selected = 'n_spp')),
+          'Species Richness'  = 'n_spp',
+          '# of Observations' = 'n_obs',
+          'Protection Metric' = 'idx_obis_wdpa'),
+        selected = 'n_spp'),
+      selectInput(
+        'rank', label = 'Taxa - Rank:', width='100%',
+        taxa_ranks, multiple=F), 
+      selectInput(
+        'taxa', label = 'Taxa - Values:', width='100%',
+        unique(eez_taxa[['taxonomicgroup']]), multiple=T)),
     
     conditionalPanel(
       condition = "input.sel_menu != 'bio'",
@@ -54,7 +60,7 @@ dashboardPage(
         tabName='env', fluidRow(
           
         tabBox(
-          id = 'tabset_viz', width=12,
+          id = 'tabset_env_viz', width=12,
           
           tabPanel(
             'Spatial',
@@ -77,4 +83,10 @@ dashboardPage(
           
       tabItem(
         tabName='bio',
-        h2('bio tab')))))
+        
+        tabBox(
+          id = 'tabset_bio_viz', width=12,
+          
+          tabPanel(
+            'Spatial',
+            leafletOutput('map_bio', height = 550)))))))
