@@ -49,10 +49,13 @@ dashboardPage(
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")),
     tabItems(
+      
       tabItem(
         tabName='env', fluidRow(
+          
         tabBox(
           id = 'tabset_viz', width=12,
+          
           tabPanel(
             'Spatial',
             leafletOutput('map_env', height = 550),
@@ -60,7 +63,18 @@ dashboardPage(
               'sel_env_ym', 'Date:', 
               min = dates[length(dates)], max = dates[1], value = min(dates),
               step = 30, animate = animationOptions(interval = 2000), 
-              timeFormat='%b %Y', width='100%'))))), #)),
+              timeFormat='%b %Y', width='100%')), #)),
+          
+          tabPanel(
+            #tagList(icon('line-chart'), 'Temporal'),
+            'Temporal',
+            conditionalPanel(
+              condition = "input.sel_env_var != 'seascape'",
+              dygraphOutput('env_ts_dygraph')),
+            conditionalPanel(
+              condition = "input.sel_env_var == 'seascape'",
+              streamgraphOutput('env_ts_streamgraph')))))),
+          
       tabItem(
         tabName='bio',
         h2('bio tab')))))

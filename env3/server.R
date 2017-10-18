@@ -75,6 +75,18 @@ shinyServer(function(input, output, session) {
     }
     ymd
   })
+  
+  get_env_eez = reactive({
+    req(input$sel_eez)
+    
+    eez_mrgids = eez_sf %>%
+      st_set_geometry(NULL) %>%
+      filter(sov_ter == input$sel_eez) %>%
+      .$MRGID
+    
+    env_vars[[get_var()]][['curr_eez']] %>%
+      filter(eez_mrgid %in% eez_mrgids)
+  })
     
   # update env WMSTiles - leafletProxy() ----
   observe({
@@ -132,6 +144,63 @@ shinyServer(function(input, output, session) {
   observeEvent(input$map_env_shape_click, {
     updateSelectizeInput(session, 'sel_eez', 'EEZ - Territory', c('', eez_sf$sov_ter), input$map_env_shape_click[['id']])
   })
+  
+  # env_ts_streamgraph ----
+  output$env_ts_streamgraph = renderStreamgraph({
+    req(input$sel_eez)
+    
+    x = get_env_eez() %>%
+      mutate(
+        ymd = ymd(str_replace(raster, '^r_', ''))) %>%
+      select(ymd, class=value, area_km2) %>%
+      arrange(ymd, class)
+
+    # TODO: fix palette to match raster -- streamgraph problem
+    # TODO: figure out time zoom in/out for streamgraph, possibly combined w/ dygraph
+    streamgraph(x, 'class', 'area_km2', 'ymd') %>%
+      sg_legend(show=T, label="Class:") %>%
+      sg_fill_manual(env_vars$seascape$pal(1:14))
+  })
+  
+  # env_ts_dygraph ----
+  output$env_ts_dygraph = renderDygraph({
+    req(input$sel_eez)
+    
+    x = get_env_eez() %>%
+      mutate(
+        ymd = ymd(str_replace(raster, '^r_', '')),
+        lwr_sd = mean - sd,
+        upr_sd = mean + sd) %>%
+      select(ymd, mean, lwr_sd, upr_sd) %>%
+      arrange(ymd)
+    
+    x = xts(select(x, -ymd), order.by=x$ymd)
+    
+    # TODO: use months for climatology
+    #the axis label is passed as a date, this function outputs only the month of the date
+    # getMonth <- 'function(d){
+    #   var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun","Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    #   return monthNames[d.getMonth()]; }'
+    
+    #the x values are passed as milliseconds, turn them into a date and extract month and day
+    # getMonthDay <- 'function(d) {
+    #   var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun","Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    #   date = new Date(d);
+    #   //return monthNames[date.getMonth()] + " " +date.getUTCDate(); }
+    #   return monthNames[date.getMonth()]; }'
+    
+    dygraph(x, main=sprintf('%s for %s', env_vars[[get_var()]]$legend, input$sel_eez)) %>%
+      dySeries(c('lwr_sd', 'mean', 'upr_sd'), label = env_vars[[get_var()]]$legend) %>%
+      #dyOptions(colors = brewer.pal(3, c('chl'='Greens', 'sst'='Reds')[[get_var()]]))
+      dyOptions(colors = c('chl'='green', 'sst'='red')[[get_var()]])
+    
+    # %>%
+      #dyAxis("x",valueFormatter=JS(getMonthDay), axisLabelFormatter=JS(getMonth)) # %>%
+      # TODO: sync with env date slider
+      #dyShading(from=sprintf('2005-%02d-01', mo), to=sprintf('2005-%02d-01', mo+1), color='rgb(200,200,200)')
+  })
+  
+  
   
   # showModal seascape info ----
   observeEvent(input$show_seascape_info, {

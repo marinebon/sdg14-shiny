@@ -1,12 +1,16 @@
 # load packages
 library(tidyverse)
 library(stringr)
+library(lubridate)
 library(leaflet)
 library(sf)
 library(shiny)
 library(shinydashboard)
 library(xml2)
 library(RColorBrewer)
+library(dygraphs)
+library(xts)
+library(streamgraph) # devtools::install_github('hrbrmstr/streamgraph')
 
 # debug ----
 # https://shiny.rstudio.com/reference/shiny/latest/shiny-options.html
@@ -77,21 +81,24 @@ env_vars = list(
     pal        = colorNumeric('Greens', seq(-6.91, 4.61, length.out = 7), na.color='transparent'),
     transform  = function(x){ round(exp(x),2) },
     curr_lyr   = 'gl_chl_curr_09km_mo',
-    curr_dates = get_wms_dates(xml, 'gl_chl_curr_09km_mo')),
+    curr_dates = get_wms_dates(xml, 'gl_chl_curr_09km_mo'),
+    curr_eez   = read_csv(sprintf('%s/raster-extract/eez_%s.csv', dir_local, 'gl_chl_curr_09km_mo'))),
   seascape=list(
     legend     = 'Class',
     values     = 1:14,
     pal        = colorFactor(colorRampPalette(brewer.pal(11,'Spectral'))(14), 1:14, na.color='transparent'),
     transform = function(x){ x },
     curr_lyr   = 'gl_sea_curr_09km_mo',
-    curr_dates = get_wms_dates(xml, 'gl_sea_curr_09km_mo')),
+    curr_dates = get_wms_dates(xml, 'gl_sea_curr_09km_mo'),
+    curr_eez   = read_csv(sprintf('%s/raster-extract/eez_%s.csv', dir_local, 'gl_sea_curr_09km_mo'))),
   sst     = list(
     legend     = 'SST (°C)',
     values     = seq(-4, 36, length.out = 7),
     pal        = colorNumeric('Reds', seq(-4, 36, length.out = 7), na.color='transparent'),
     transform = function(x){ x },
     curr_lyr   = 'gl_sst_curr_09km_mo',
-    curr_dates = get_wms_dates(xml, 'gl_sst_curr_09km_mo')))
+    curr_dates = get_wms_dates(xml, 'gl_sst_curr_09km_mo'),
+    curr_eez   = read_csv(sprintf('%s/raster-extract/eez_%s.csv', dir_local, 'gl_sst_curr_09km_mo'))))
 
 # default layer
 var   = 'sst'
