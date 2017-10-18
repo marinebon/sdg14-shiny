@@ -1,5 +1,7 @@
 # TODO: seascapes, per https://marinebon.github.io/seascape-viz/prep.html & /mbon/data_big/satellite/seascapes/*
 
+options(shiny.reactlog=TRUE) 
+
 shinyServer(function(input, output, session) {
   
   get_s = reactive({
@@ -19,7 +21,10 @@ shinyServer(function(input, output, session) {
     month_choices = setNames(
       names(s),
       month.abb[month(attr(s, 'dates'))])
-    updateSelectInput(session, 'sel_lyr', 'Month', month_choices)
+    
+    #updateSelectInput(session, 'sel_lyr', 'Month', month_choices)
+    
+    cat(file=stderr(), 'get_s()\n')
     
     s
   })
@@ -28,6 +33,9 @@ shinyServer(function(input, output, session) {
     if (is.null(input$sel_grd))                 s_type = ''
     if (str_detect(input$sel_grd, 'chlor_a'))   s_type = 'chl'
     if (str_detect(input$sel_grd, 'seascapes')) s_type = 'seascape'
+    
+    cat(file=stderr(), 'get_s_type()\n')
+    
     s_type
   })
   
@@ -37,12 +45,14 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'grd_type', suspendWhenHidden=F)
   
   get_r = reactive({
+    
+    cat(file=stderr(), 'get_r()\n')
+    browser()
+    
     req(input$sel_grd)
     req(input$sel_lyr)
     req(get_s())
-    req(input$sel_lyr %in% names(get_s()))
-    
-    #cat(file=stderr(), '\nget_r()\n')
+    #req(input$sel_lyr %in% names(get_s()))
     
     s = get_s()
     
@@ -56,6 +66,9 @@ shinyServer(function(input, output, session) {
   })
   
   output$ui_lyr <- renderUI({
+    
+    cat(file=stderr(), 'output$ui_lyr\n')
+    
     req(input$sel_grd)
     
     #browser()
@@ -68,7 +81,11 @@ shinyServer(function(input, output, session) {
   })
   
   output$map <- renderLeaflet({
-    req(get_r())
+    
+    cat(file=stderr(), 'output$map\n')
+    
+    #req(get_r())
+    browser()
     
     r = get_r()
     r_type = get_s_type()
@@ -145,6 +162,9 @@ shinyServer(function(input, output, session) {
   eez4plot = reactiveVal(NULL)
   
   output$ts_streamgraph = renderStreamgraph({
+    
+    cat(file=stderr(), 'output$ts_streamgraph\n')
+    
     req(input$sel_grd)
     req(input$sel_lyr)
     req(eez4plot())

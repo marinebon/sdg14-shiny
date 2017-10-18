@@ -161,7 +161,7 @@ server <- function(input, output, session) {
     r = get_r()
     r_type = get_s_type()
     
-    #cat(file=stderr(), sprintf('\nrenderLeaflet()\n  r_type:%s\n  sel_grd:%s\n  sel_lyr:%s\n', r_type, input$sel_grd, input$sel_lyr))
+    cat(file=stderr(), sprintf('\nrenderLeaflet()\n  r_type:%s\n  sel_grd:%s\n  sel_lyr:%s\n', r_type, input$sel_grd, input$sel_lyr))
     
     if (r_type=='chl'){
       r = log(r)
@@ -184,6 +184,8 @@ server <- function(input, output, session) {
     
     #browser()
     
+    cat(file=stderr(), sprintf('\nbefore bbox()\n'))
+    
     if (length(input$sel_eez) == 1 && input$sel_eez == ''){
       b = st_bbox(eez_sf)
     } else {
@@ -193,7 +195,9 @@ server <- function(input, output, session) {
       # st_transform(crs_mol))
     }
     
-    leaflet(
+    cat(file=stderr(), sprintf('\nbefore leaflet()\n'))
+    
+    m = leaflet(
       options=leafletOptions(
         minZoom=2,
         worldCopyJump=T)) %>%
@@ -248,6 +252,9 @@ server <- function(input, output, session) {
         fill = F,
         weight = 4,
         color = 'yellow')
+    
+    cat(file=stderr(), sprintf('\nafter leaflet()\n'))
+    m
   })
   
   #eez4plot = reactiveVal(NULL)

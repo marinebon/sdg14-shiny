@@ -6,6 +6,8 @@ library(shiny)
 library(shinydashboard)
 library(xml2)
 
+options(shiny.sanitize.errors = F)
+
 dir_wd = 'env3'
 if (basename(getwd())!=dir_wd) setwd(dir_wd)
 
@@ -50,6 +52,7 @@ vars = list(
 
 # default layer
 var   = 'sst'
+dates = vars[[var]][['curr_dates']]
 
 # TODO: extract timeseries by EEZ
 

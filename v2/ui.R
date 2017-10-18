@@ -16,17 +16,17 @@ dashboardPage(
             conditionalPanel(
               condition = "output.grd_type=='chl'",
               dygraphOutput('ts_dygraph')),
+            conditionalPanel(
+              condition = "output.grd_type=='seascape'",
+              streamgraphOutput('ts_streamgraph')),
             collapsible=T),
-          conditionalPanel(
-            condition = "output.grd_type=='seascape'",
-            streamgraphOutput('ts_streamgraph')),
-          collapsible=T),
-        box(
-          title='Map',
-          leafletOutput('map', height = 550),
-          collapsible=T)),
+          box(
+            title='Map',
+            leafletOutput('map', height = 550),
+            collapsible=T))),
       tabItem(
         tabName ='Local',
         fluidRow(
           box(
-            title='Infographic')))) ))
+            title='Infographic',
+            '...')))) ))
