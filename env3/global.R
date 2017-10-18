@@ -5,6 +5,7 @@ library(leaflet)
 library(shiny)
 library(shinydashboard)
 library(xml2)
+library(RColorBrewer)
 
 # https://shiny.rstudio.com/reference/shiny/latest/shiny-options.html
 options(
@@ -40,14 +41,46 @@ get_wms_dates = function(xml, lyr){
     as.Date()
 }
 
-vars = list(
+var_colors = list(
+  seascape = list(
+    type   = 'interval',
+    colors = 'Spectral',
+    min    = 1,
+    max    = 14,
+    n      = 14),
+  chl = list(
+    type   = 'ramp',
+    colors = 'Greens',
+    min    = -6.91,
+    max    = 4.61,
+    n      = 7),
+  sst = list(
+    type   = 'ramp',
+    colors = 'Reds',
+    min    = -4,
+    max    = 36,
+    n      = 7))
+
+env_vars = list(
   chl     = list(
+    legend     = 'Chl (mg/m<sup>3</sup>)',
+    values     = seq(-6.91, 4.61, length.out = 7),
+    pal        = colorNumeric('Greens', seq(-6.91, 4.61, length.out = 7), na.color='transparent'),
+    transform  = function(x){ round(exp(x),2) },
     curr_lyr   = 'gl_chl_curr_09km_mo',
     curr_dates = get_wms_dates(xml, 'gl_chl_curr_09km_mo')),
   seascape=list(
+    legend     = 'Class',
+    values     = 1:14,
+    pal        = colorFactor(colorRampPalette(brewer.pal(11,'Spectral'))(14), 1:14, na.color='transparent'),
+    transform = function(x){ x },
     curr_lyr   = 'gl_sea_curr_09km_mo',
     curr_dates = get_wms_dates(xml, 'gl_sea_curr_09km_mo')),
   sst     = list(
+    legend     = 'SST (°C)',
+    values     = seq(-4, 36, length.out = 7),
+    pal        = colorNumeric('Reds', seq(-4, 36, length.out = 7), na.color='transparent'),
+    transform = function(x){ x },
     curr_lyr   = 'gl_sst_curr_09km_mo',
     curr_dates = get_wms_dates(xml, 'gl_sst_curr_09km_mo')))
 
