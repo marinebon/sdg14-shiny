@@ -25,6 +25,7 @@ for (pkg in packages){ # pkg= packages[1] # pkg = 'r-spatial/mapview@develop' # 
 select    = dplyr::select
 addLegend = leaflet::addLegend
 
+options(shiny.sanitize.errors = F)
 
 if (basename(getwd())!='env') setwd('env')
 

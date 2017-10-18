@@ -15,6 +15,8 @@ dir_root = switch(
   'Windows' = 'P:',                                          # constance.bren.ucsb.edu
   'Linux'   = '/mbon/data_big/connectivity')                 # mbon.marine.usf.edu
 
+options(shiny.sanitize.errors = F)
+
 # sanctuaries = c('fknms','mbnms')
 # yrs = 2009:2011
 # plds = c(10,30,50)

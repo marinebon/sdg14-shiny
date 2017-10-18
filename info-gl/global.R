@@ -20,6 +20,8 @@ for (pkg in packages){ # pkg= packages[1] # pkg = 'r-spatial/mapview@develop' # 
   }
 }
 
+options(shiny.sanitize.errors = F)
+
 # # set vars
 # #setwd('info-gl')
 # countries_geo = 'data/countries.geojson'
