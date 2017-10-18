@@ -51,7 +51,7 @@ shinyServer(function(input, output, session) {
 
     # ensure date match with time slice
     ymd =  sprintf('%s-15', str_sub(as.character(input$sel_ym), 1,7))
-    cat(file=stderr(), sprintf('ymd: %s\n', ymd))
+    #cat(file=stderr(), sprintf('ymd: %s\n', ymd))
     
     # update env WMSTile
     leafletProxy('map') %>%

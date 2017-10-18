@@ -8,10 +8,11 @@ library(xml2)
 
 # https://shiny.rstudio.com/reference/shiny/latest/shiny-options.html
 options(
-  shiny.sanitize.errors = F, shiny.trace=T, 
-  shiny.autoreload=T, shiny.testmode=T,
+  shiny.sanitize.errors = F, shiny.autoreload=T,
   shiny.fullstacktrace=T, shiny.stacktraceoffset=T,
-  shiny.reactlog=T, shiny.minified=F)
+  shiny.trace=F, shiny.testmode=F, shiny.minified=T,
+  shiny.deprecation.messages=T,
+  shiny.reactlog=F)
 
 dir_wd = 'env3'
 if (basename(getwd())!=dir_wd) setwd(dir_wd)
