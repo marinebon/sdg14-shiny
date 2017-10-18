@@ -86,9 +86,9 @@ env_vars = list(
 
 # default layer
 var   = 'sst'
-dates = vars[[var]][['curr_dates']]
+dates = env_vars[[var]][['curr_dates']]
 
-msg = function(txt, debug=T){
+msg = function(txt, debug=F){
   if (debug)
     cat(sprintf('%s ~ %s\n', txt, Sys.time()), file=stderr())
 }

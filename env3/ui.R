@@ -27,10 +27,6 @@ dashboardPage(
       condition = "input.sel_menu == 'env'",
       radioButtons(
         'sel_env_var', label=NULL,
-        # choices = list(
-        #   'Chlorophyll'='chl',
-        #   'Seascape'='seascape',
-        #   'Temperature'='sst'),
         choiceValues = list('chl','seascape','sst'),
         choiceNames = list(
           'Chlorophyll',
