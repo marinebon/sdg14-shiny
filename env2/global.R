@@ -72,10 +72,17 @@ chl_dir = file.path(dir_root, 'satellite/chlor_a/clim_27km')
 chl_files = list.files(chl_dir, '.*_leaflet\\.grd$')
 chl_paths = file.path(chl_dir, chl_files)
 chl_names = str_sub(chl_files, 1, nchar(chl_files)-12)
+chl_clim_eez = file.path(chl_dir, 'A20032007_chlor_a_CLIM_MO_GLOB_27km_eez-mean-sd.csv')
+
+sst_dir   = file.path(dir_root, 'satellite/sst4/anom_27km')
+sst_files = list.files(sst_dir, '.*_leaflet\\.grd$')
+sst_paths = file.path(sst_dir, sst_files)
+sst_names = str_sub(sst_files, 1, nchar(sst_files)-12)
 
 grd_choices = list(
-  `Seascapes` = c('GLOBE14_I90VAR3_9k'=file.path(dir_root, 'satellite/seascapes/gl/GLOBE14_I90VAR3_9k_leaflet.grd')),
-  `Chl` = setNames(chl_paths, chl_names))
+  `Seascapes` = c('GLOBE14_I90VAR3_9k'=file.path(dir_root, 'satellite/seascapes/gl_clim/GLOBE14_I90VAR3_9k_leaflet.grd')),
+  `Chl` = setNames(chl_paths, chl_names),
+  `SST` = setNames(sst_paths, sst_names))
 
 countries <- c("Australia", "United Kingdom", "United States")
 

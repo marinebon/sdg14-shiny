@@ -15,7 +15,13 @@ ui <- function(request) {
       sidebarMenu(
       #   id = 'menu_var',
         menuItem(
-           text='Biological', icon=icon('tree'), tabName='bio'),
+           text='Biological', icon=icon('tree'), tabName='bio', startExpanded=F,
+          menuSubItem(
+            'Species Richness', tabName='spp_richness', icon=icon("angle-double-right")),
+          menuSubItem(
+            '# of Observations', tabName='n_obs', icon=icon("angle-double-right")),
+          menuSubItem(
+            'Protection Metric', tabName='obis_wdpa', icon=icon("angle-double-right"))),        
         menuItem(
           text='Environmental', icon=icon('thermometer'), tabName='env', selected=T, startExpanded=T,
           menuSubItem(
@@ -98,25 +104,40 @@ server <- function(input, output, session) {
   get_s = reactive({
     req(input$sel_grd)
     
+    cat('input$sel_grd:',input$sel_grd, '\n', file=stderr())
     s = stack(input$sel_grd)
     
     # dates
-    attr(s, 'dates') = as_date(names(s), format='ymd_%Y.%m.%d')
-    
-    # update sel_lyr
-    #cat(file=stderr(),'\nupdating sel_lyr: months for new s from sel_grd\n')
-    month_choices = setNames(
-      names(s),
-      month.abb[month(attr(s, 'dates'))])
-    updateSelectInput(session, 'sel_lyr', 'Month', month_choices)
-    
-    s
+    #browser()
+    if (input$sel_grd %in% grd_choices[['SST']]){
+      # TODO: real dates, fake for now
+      attr(s, 'dates') = as_date(c('2002-01-01','2002-07-01','2002-12-01'), format='%Y-%m-%d')
+      
+      month_choices = setNames(
+        names(s),
+        month.abb[month(attr(s, 'dates'))])
+      updateSelectInput(session, 'sel_lyr', 'Month', month_choices)
+      
+    } else {
+      attr(s, 'dates') = as_date(names(s), format='ymd_%Y.%m.%d')
+      
+      # update sel_lyr
+      #cat(file=stderr(),'\nupdating sel_lyr: months for new s from sel_grd\n')
+      month_choices = setNames(
+        names(s),
+        month.abb[month(attr(s, 'dates'))])
+      updateSelectInput(session, 'sel_lyr', 'Month', month_choices)
+      
+      s
+    }
   })
   
   get_s_type = reactive({
+    #browser()
     if (is.null(input$sel_grd))                 s_type = ''
     if (str_detect(input$sel_grd, 'chlor_a'))   s_type = 'chl'
     if (str_detect(input$sel_grd, 'seascapes')) s_type = 'seascape'
+    if (str_detect(input$sel_grd, 'sst'))       s_type = 'sst'
     s_type
   })
   
@@ -301,8 +322,9 @@ server <- function(input, output, session) {
     mo = month(date)
 
     #eez = 'Albania'
-    nc_path <- "/mbon/data_big/satellite/chlor_a/clim_27km/A20032007_chlor_a_CLIM_MO_GLOB_27km.nc"
-    d = read_csv(sprintf('%s_eez-mean-sd.csv', tools::file_path_sans_ext(nc_path)))
+    #nc_path <- "/mbon/data_big/satellite/chlor_a/clim_27km/A20032007_chlor_a_CLIM_MO_GLOB_27km.nc"
+    #d = read_csv(sprintf('%s_eez-mean-sd.csv', tools::file_path_sans_ext(nc_path)))
+    d = read_csv(chl_clim_eez)
     d = eez_sf %>%
       st_set_geometry(NULL) %>%
       left_join(d, by='MRGID')
@@ -386,7 +408,7 @@ server <- function(input, output, session) {
       title='Save Plot',
       textInput('txt_plot_title', 'Title', value='Global Seascape Map'),
       textAreaInput('txt_plot_caption', 'Caption', value=''),
-      HTML('TODO: associate with element in svg infographic scene'),
+      #HTML('TODO: associate with element in svg infographic scene'),
       footer = tagList(
         modalButton('Dismiss'),
         actionButton('btn_save_plot','Save'))))
