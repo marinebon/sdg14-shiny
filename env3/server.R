@@ -2,7 +2,7 @@ shinyServer(function(input, output, session) {
   
   # leaflet map, initial ----
   output$map <- renderLeaflet({
-    cat('renderLeaflet()\n', file=stderr())
+    msg('renderLeaflet()')
     
     leaflet(
       options=c(
@@ -23,11 +23,9 @@ shinyServer(function(input, output, session) {
   
   # update sel_ym ----
   observe({
-    req(input$sel_var)
+    msg('updateSliderInput()')
     
-    
-    cat('updateSliderInput()\n', file=stderr())
-    
+    dates = get_dates()
     updateSliderInput(
       session, 'sel_ym', 'Date:', 
       min = dates[length(dates)], max = dates[1], 
@@ -59,10 +57,10 @@ shinyServer(function(input, output, session) {
     
   # update env WMSTiles ----
   observe({
-    cat('leafletProxy()\n', file=stderr())
+    msg('leafletProxy()')
 
     # ensure date match with time slice
-    cat(file=stderr(), sprintf('  get_var()="%s", get_ymd()="%s"\n', get_var(), get_ymd()))
+    msg(sprintf('  get_var()="%s", get_ymd()="%s"', get_var(), get_ymd()))
     
     # update env WMSTile
     leafletProxy('map') %>%

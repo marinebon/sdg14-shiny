@@ -54,6 +54,12 @@ vars = list(
 # default layer
 var   = 'sst'
 dates = vars[[var]][['curr_dates']]
+
+msg = function(txt, debug=T){
+  if (debug)
+    cat(sprintf('%s ~ %s\n', txt, Sys.time()), file=stderr())
+}
+
 # TODO: extract timeseries by EEZ
 
 # TODO: other env w/ clim: chl, sst 9km
