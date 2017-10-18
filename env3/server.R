@@ -11,7 +11,27 @@ shinyServer(function(input, output, session) {
           worldCopyJump=T),
         attributionControl=F)) %>%
       addProviderTiles("Stamen.TonerLite", group='Gray Land') %>% 
-      # initial env WMSTile
+      # eez
+      addPolygons(
+        data=eez_sf,
+        group = 'EEZ',
+        layerId = ~sov_ter,
+        fillColor = NA,
+        weight = 2,
+        opacity = 1,
+        color = 'white',
+        #fillOpacity = 0.7,
+        highlight = highlightOptions(
+          weight = 5,
+          color = "#666",
+          #fillOpacity = 0.7,
+          bringToFront = TRUE),
+        label = eez_labels,
+        labelOptions = labelOptions(
+          style = list("font-weight" = "normal", padding = "3px 8px"),
+          textsize = "15px",
+          direction = "auto")) %>%
+      # env
       addWMSTiles(
         baseUrl = 'http://mbon.marine.usf.edu:8080/geoserver/satellite/wms',
         group = 'env', layers = env_vars[[var]][['curr_lyr']],
@@ -29,9 +49,10 @@ shinyServer(function(input, output, session) {
     updateSliderInput(
       session, 'sel_env_ym', 'Date:', 
       min = dates[length(dates)], max = dates[1], 
-      value = dates[1])
+      value = min(dates))
   })
   
+  # env reactives ----
   get_var = reactive({
     if (!is.null(input$sel_env_var))
       var = input$sel_env_var
@@ -50,23 +71,20 @@ shinyServer(function(input, output, session) {
     } else {
       if (!is.null(input$sel_env_var))
         var = input$sel_env_var
-      ymd = env_vars[[var]][['curr_dates']][1]
+      ymd = min(env_vars[[var]][['curr_dates']])
     }
     ymd
   })
     
-  # update env WMSTiles ----
+  # update env WMSTiles - leafletProxy() ----
   observe({
-    msg('leafletProxy()')
+    msg('update env WMSTiles - leafletProxy()')
 
     # ensure date match with time slice
     #msg(sprintf('  input$sel_menu=%s, get_var()="%s", get_ymd()="%s"', input$sel_menu, get_var(), get_ymd()))
-    #browser()
     v = env_vars[[get_var()]]
     
     # update env WMSTile
-    # if (get_var()=='seascape')
-    #   browser()
     leafletProxy('map_env') %>%
       clearGroup('env') %>% 
       clearControls() %>% # remove legend
@@ -85,6 +103,37 @@ shinyServer(function(input, output, session) {
     
   })
   
+  
+  # zoom to eez - leafletProxy() ----
+  observe({
+    msg('zoom to eez - leafletProxy()')
+  
+    if (length(input$sel_eez) == 1 && input$sel_eez == ''){
+      b = st_bbox(eez_sf)
+    } else {
+      b = st_bbox(
+        eez_sf %>%
+          filter(sov_ter %in% input$sel_eez)) # %>%
+    }
+    
+    leafletProxy('map_env') %>%    
+      fitBounds(b[['xmin']], b[['ymin']], b[['xmax']], b[['ymax']]) %>%
+      clearGroup('eez_hi') %>%
+      addPolygons(
+        data = eez_sf %>%
+          filter(sov_ter %in% input$sel_eez),
+        group = 'eez_hi',
+        fill = F,
+        weight = 4,
+        color = 'yellow')
+    
+  })
+  
+  observeEvent(input$map_env_shape_click, {
+    updateSelectizeInput(session, 'sel_eez', 'EEZ - Territory', c('', eez_sf$sov_ter), input$map_env_shape_click[['id']])
+  })
+  
+  # showModal seascape info ----
   observeEvent(input$show_seascape_info, {
     showModal(modalDialog(
       title = 'Seascape Definitions',

@@ -2,11 +2,13 @@
 library(tidyverse)
 library(stringr)
 library(leaflet)
+library(sf)
 library(shiny)
 library(shinydashboard)
 library(xml2)
 library(RColorBrewer)
 
+# debug ----
 # https://shiny.rstudio.com/reference/shiny/latest/shiny-options.html
 options(
   shiny.sanitize.errors = F, shiny.autoreload=T,
@@ -15,15 +17,42 @@ options(
   shiny.deprecation.messages=T,
   shiny.reactlog=F)
 
+msg = function(txt, debug=F){
+  if (debug)
+    cat(sprintf('%s ~ %s\n', txt, Sys.time()), file=stderr())
+}
+
+# paths ----
 dir_wd = 'env3'
 if (basename(getwd())!=dir_wd) setwd(dir_wd)
 
-dir_root = switch(
+dir_local = switch(
   Sys.info()[['sysname']],
-  'Darwin'  = '/Volumes/Best HD/mbon_data_big', # BB's Mac
+  'Darwin'  = '/Volumes/Best HD/mbon_data_big/local', # BB's Mac
   'Windows' = 'P:',                                          # constance.bren.ucsb.edu
-  'Linux'   = '/mbon/data_big')                 # mbon.marine.usf.edu
+  'Linux'   = '/mbon-local')                 # mbon.marine.usf.edu
 
+#eez_s005_shp    = file.path(dir_local, 'boundaries/eez_s005.shp')
+eez_s005005_shp = file.path(dir_local, 'boundaries/eez_s005005.shp')
+
+# eez ----
+eez_sf = read_sf(eez_s005005_shp)  %>%
+  filter(Pol_type=='200NM') %>% # not 'Disputed','Joint regime'
+  mutate(
+    n_sov = n(),
+    sov_ter = ifelse(
+      Sovereign1 == Territory1,
+      Sovereign1,
+      sprintf('%s - %s', Sovereign1, Territory1))) %>% 
+  ungroup() %>%
+  arrange(sov_ter)
+
+eez_labels = sprintf(
+  '<strong>%s</strong>',
+  eez_sf$Territory1) %>% 
+  lapply(HTML)
+
+# env layers ----
 # get dates from WMS layer time list
 wms_url = 'http://mbon.marine.usf.edu:8080/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities'
 xml = read_xml(wms_url)
@@ -40,26 +69,6 @@ get_wms_dates = function(xml, lyr){
     sort(decreasing=T) %>%
     as.Date()
 }
-
-var_colors = list(
-  seascape = list(
-    type   = 'interval',
-    colors = 'Spectral',
-    min    = 1,
-    max    = 14,
-    n      = 14),
-  chl = list(
-    type   = 'ramp',
-    colors = 'Greens',
-    min    = -6.91,
-    max    = 4.61,
-    n      = 7),
-  sst = list(
-    type   = 'ramp',
-    colors = 'Reds',
-    min    = -4,
-    max    = 36,
-    n      = 7))
 
 env_vars = list(
   chl     = list(
@@ -86,12 +95,8 @@ env_vars = list(
 
 # default layer
 var   = 'sst'
-dates = env_vars[[var]][['curr_dates']]
+dates = env_vars[[var]][['curr_dates']] %>% sort()
 
-msg = function(txt, debug=F){
-  if (debug)
-    cat(sprintf('%s ~ %s\n', txt, Sys.time()), file=stderr())
-}
 
 # TODO: extract timeseries by EEZ
 

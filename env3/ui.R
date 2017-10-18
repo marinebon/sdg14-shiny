@@ -24,7 +24,7 @@ dashboardPage(
         selected = 'n_spp')),
     
     conditionalPanel(
-      condition = "input.sel_menu == 'env'",
+      condition = "input.sel_menu != 'bio'",
       radioButtons(
         'sel_env_var', label=NULL,
         choiceValues = list('chl','seascape','sst'),
@@ -37,7 +37,9 @@ dashboardPage(
               label=NULL, 
               icon=icon('question-circle', class='fa-li')))),
           'Temperature'),
-        selected = 'sst'))),
+        selected = 'sst')),
+    
+    selectizeInput('sel_eez', 'EEZ - Territory', c('', eez_sf$sov_ter), selected='')),
   
   #selectInput(
   # 'sel_temporal', 'Temporal:', 
@@ -56,7 +58,7 @@ dashboardPage(
             leafletOutput('map_env', height = 550),
             sliderInput(
               'sel_env_ym', 'Date:', 
-              min = dates[length(dates)], max = dates[1], value = dates[1],
+              min = dates[length(dates)], max = dates[1], value = min(dates),
               step = 30, animate = animationOptions(interval = 2000), 
               timeFormat='%b %Y', width='100%'))))), #)),
       tabItem(
