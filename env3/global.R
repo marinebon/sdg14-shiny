@@ -53,7 +53,6 @@ vars = list(
 
 # default layer
 var   = 'sst'
-dates = vars[[var]][['curr_dates']]
 
 # TODO: extract timeseries by EEZ
 
