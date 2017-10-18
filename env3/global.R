@@ -6,8 +6,12 @@ library(shiny)
 library(shinydashboard)
 library(xml2)
 
-options(shiny.sanitize.errors = F)
-options(shiny.trace=T)
+# https://shiny.rstudio.com/reference/shiny/latest/shiny-options.html
+options(
+  shiny.sanitize.errors = F, shiny.trace=T, 
+  shiny.autoreload=T, shiny.testmode=T,
+  shiny.fullstacktrace=T, shiny.stacktraceoffset=T,
+  shiny.reactlog=T, shiny.minified=F)
 
 dir_wd = 'env3'
 if (basename(getwd())!=dir_wd) setwd(dir_wd)
