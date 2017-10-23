@@ -69,7 +69,7 @@ eez_sf = read_sf(eez_s005005_shp)  %>%
 
 eez_labels = sprintf(
   '<strong>%s</strong>',
-  eez_sf$Territory1) %>% 
+  eez_sf$sov_ter) %>% 
   lapply(HTML)
 
 eez_territories = eez_sf %>% filter(!is.na(n_obs)) %>% .$Territory1

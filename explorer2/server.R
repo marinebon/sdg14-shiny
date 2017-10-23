@@ -50,16 +50,15 @@ shinyServer(function(input, output, session) {
     
     eez_labels <- sprintf(
       "<strong>%s</strong><br/>%s: %g",
-      eez_sf$Territory1, bio_var, eez_sf[[bio_var]]
+      eez_sf$sov_ter, bio_var, eez_sf[[bio_var]]
     ) %>% lapply(HTML)
     
     if (length(input$sel_eez) == 1 && input$sel_eez == ''){
       b = eez_sf %>%
-        filter(Territory1 %in% eez_territories) %>%
         st_bbox()
     } else {
       b = eez_sf %>%
-        filter(Territory1 %in% input$sel_eez) %>%
+        filter(sov_ter %in% input$sel_eez) %>%
         st_bbox()
     }
     
@@ -72,7 +71,7 @@ shinyServer(function(input, output, session) {
       addPolygons(
         data=eez_sf,
         group = 'Bio metric',
-        layerId = ~Territory1,
+        layerId = ~sov_ter,
         fillColor = ~pal(eez_sf[[bio_var]]),
         fillOpacity = 0.7,
         weight = 2,
@@ -103,7 +102,7 @@ shinyServer(function(input, output, session) {
       clearGroup('eez_hi') %>%
       addPolygons(
         data = eez_sf %>%
-          filter(Territory1 %in% input$sel_eez),
+          filter(sov_ter %in% input$sel_eez),
         group = 'eez_hi',
         fill = F,
         weight = 4,
