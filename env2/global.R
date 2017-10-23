@@ -85,11 +85,3 @@ grd_choices = list(
   `Seascapes` = c('GLOBE14_I90VAR3_9k'=file.path(dir_root, 'satellite/seascapes/gl_clim/GLOBE14_I90VAR3_9k_leaflet.grd')),
   `Chl` = setNames(chl_paths, chl_names),
   `SST` = setNames(sst_paths, sst_names))
-
-countries <- c("Australia", "United Kingdom", "United States")
-
-flags <- c(
-  "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/au.svg",
-  "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/gb.svg",
-  "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/us.svg"
-)
