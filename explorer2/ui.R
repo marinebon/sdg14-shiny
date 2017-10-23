@@ -10,7 +10,7 @@ dashboardPage(
       id = 'sel_menu',
       
       menuItem(
-        'Biological', tabName='bio', icon=icon('tree'), selected=T, startExpanded=T),
+        HTML('<span class="icon-octopus"></span> &nbsp;&nbsp; Biological'), tabName='bio', selected=T, startExpanded=T),
       menuItem(
         'Environmental', tabName = 'env', icon=icon('thermometer'))),
     
@@ -63,7 +63,9 @@ dashboardPage(
           label = 'Save Report', icon=icon('file-o'), circle=F, size='sm',
           #bookmarkButton(id='btn_bookmark'),
           actionButton('btn_download_url', 'Bookmark (url)', icon=icon('bookmark-o')),
-          actionButton('btn_download_pdf', 'Portable (*.pdf)', icon=icon('file-pdf-o')))))),
+          downloadButton('btn_download_pdf', 'Portable (*.pdf)', icon=icon('file-pdf-o')),
+          downloadButton('btn_download_doc', 'Word (*.docx)', icon=icon('file-word-o')),
+          downloadButton('btn_download_htm', 'Web (*.html)', icon=icon('file-text-o')))))),
   
   #selectInput(
   # 'sel_temporal', 'Temporal:', 
@@ -71,7 +73,9 @@ dashboardPage(
   
   dashboardBody(
     tags$head(
-      tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")),
+      tags$link(rel = "stylesheet", type = "text/css", href = "custom.css"),
+      tags$link(rel = "stylesheet", type = "text/css", href = "icomoon.io_mbon/style.css")),
+    
     tabItems(
       
       # body env ----

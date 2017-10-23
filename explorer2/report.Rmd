@@ -1,0 +1,93 @@
+---
+title: "MBON SDG14 Plots"
+output:
+  word_document:
+    toc: yes
+  pdf_document:
+    number_sections: yes
+    toc: yes
+  html_document:
+    number_sections: yes
+    toc: yes
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
+params:
+  url: http://127.0.0.1:3896/
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+
+source('global.R')
+
+bio_map = function(bio_var, sel_eez){
+  #bio_map('n_spp', 'Albania')
+  # bio_var='n_spp'; sel_eez='Albania'
+  
+    colpal = colorNumeric('Spectral', eez_sf[[bio_var]])
+    
+    eez_labels <- sprintf(
+      "<strong>%s</strong><br/>%s: %g",
+      eez_sf$Territory1, bio_var, eez_sf[[bio_var]]
+    ) %>% lapply(HTML)
+    
+    if (length(sel_eez) == 1 && sel_eez == ''){
+      b = eez_sf %>%
+        filter(Territory1 %in% eez_territories) %>%
+        st_bbox()
+    } else {
+      b = eez_sf %>%
+        filter(Territory1 %in% sel_eez) %>%
+        st_bbox()
+    }
+    
+    m = leaflet(
+      options=leafletOptions(
+        minZoom=2, worldCopyJump=T,
+        attributionControl=F, zoomControl=F)) %>%
+      addProviderTiles("Stamen.TonerLite", group='Gray Land') %>%
+      addPolygons(
+        data=eez_sf,
+        group = 'Bio metric',
+        layerId = ~Territory1,
+        fillColor = ~colpal(eez_sf[[bio_var]]),
+        fillOpacity = 0.7,
+        weight = 2,
+        opacity = 1,
+        color = 'white',
+        highlight = highlightOptions(
+          weight = 5,
+          color = "#666",
+          bringToFront = TRUE),
+        label = eez_labels,
+        labelOptions = labelOptions(
+          style = list("font-weight" = "normal", padding = "3px 8px"),
+          textsize = "15px",
+          direction = "auto")) %>%
+      addLegend(
+        title=HTML(c('n_spp'='# species','n_obs'='# obs','idx_obis_wdpa'='protection<br>metric')[bio_var]),
+        pal = colpal, values = eez_sf[[bio_var]], opacity = 0.7,
+        position = "bottomright") %>%
+      fitBounds(b[['xmin']], b[['ymin']], b[['xmax']], b[['ymax']]) %>%
+      addPolygons(
+        data = eez_sf %>%
+          filter(Territory1 %in% sel_eez),
+        group = 'eez_hi',
+        fill = F,
+        weight = 4,
+        color = 'yellow')
+    m
+}
+
+
+```
+
+You can modify these plots interactively and regenerate this report here:
+
+`r params$url`
+
+# Albania spp
+
+```{r ,fig.cap='Albania caption'}
+bio_map('n_spp', 'Albania')
+```
+

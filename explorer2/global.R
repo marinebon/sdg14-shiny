@@ -4,15 +4,19 @@ library(rlang)
 library(purrr)
 library(stringr)
 library(lubridate)
+library(rmarkdown)
 library(leaflet)
 library(sf)
 library(shiny)
 library(shinydashboard)
+library(shinyWidgets)
+library(htmltools)
 library(xml2)
 library(RColorBrewer)
 library(dygraphs)
 library(xts)
 library(streamgraph) # devtools::install_github('hrbrmstr/streamgraph')
+addLegend = leaflet::addLegend
 
 # debug ----
 # https://shiny.rstudio.com/reference/shiny/latest/shiny-options.html

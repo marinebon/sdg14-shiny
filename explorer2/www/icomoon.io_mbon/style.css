@@ -1,0 +1,32 @@
+@font-face {
+  font-family: 'mbon';
+  src:  url('fonts/mbon.eot?3w30rn');
+  src:  url('fonts/mbon.eot?3w30rn#iefix') format('embedded-opentype'),
+    url('fonts/mbon.ttf?3w30rn') format('truetype'),
+    url('fonts/mbon.woff?3w30rn') format('woff'),
+    url('fonts/mbon.svg?3w30rn#mbon') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'mbon' !important;
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-fish:before {
+  content: "\e901";
+}
+.icon-octopus:before {
+  content: "\e900";
+}

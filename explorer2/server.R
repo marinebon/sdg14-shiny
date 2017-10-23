@@ -401,15 +401,24 @@ shinyServer(function(input, output, session) {
     load_plot(input$sel_plots)
     #browseURL(url_plot)
   })
-
+  
+  download_report = function(output_fmt){
+    downloadHandler(
+      filename = function() {
+        paste0('mbon-sdg14-plots_', str_replace_all(format(Sys.time(), tz='GMT'), '[ ]', '.'), '-GMT.pdf')},
+      content = function(file) {
+        url = bkmark(session)
+        render('report.Rmd', output_format=output_fmt, output_file=file, params = list(url=url))})
+  }
+  
   # save: btn_download_pdf ----
-  observeEvent(input$btn_download_pdf, {
-    
-    tempfile('mbon_sdg14_plots_.Rmd')
-    plots2rmd(state$values$saved_plots, )
-    url = bkmark(session)
-    browseURL(url)
-  })
+  output$btn_download_pdf = download_report('pdf_document')
+  output$btn_download_doc = download_report('pdf_document')
+  output$btn_download_htm = download_report('pdf_document')
+
+# plots2rmd = function(values$saved_plots){
+#   
+# }
   
   # save: btn_download_url ----
   observeEvent(input$btn_download_url, {
