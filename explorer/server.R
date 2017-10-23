@@ -87,7 +87,7 @@ shinyServer(function(input, output, session) {
           textsize = "15px",
           direction = "auto")) %>%
       addLegend(
-        title=HTML(bio_var),
+        title=HTML(c('n_spp'='# species','n_obs'='# obs','idx_obis_wdpa'='protection<br>metric')[bio_var]),
         pal = pal, values = eez_sf[[bio_var]], opacity = 0.7,
         position = "bottomright") %>%
       addGraticule()  %>%
@@ -207,7 +207,7 @@ shinyServer(function(input, output, session) {
   
   # zoom to eez ----
   observe({
-    msg('zoom to eez - leafletProxy()')
+    msg(sprintf('zoom to eez, input$sel_eez: %s', input$sel_eez))
   
     if (length(input$sel_eez) == 1 && input$sel_eez == ''){
       b = st_bbox(eez_sf)
@@ -218,6 +218,8 @@ shinyServer(function(input, output, session) {
     }
     
     # TODO: based on default menu, only zoom to visible map
+    #browser()
+    #msg(sprintf('sel_menu: %s, sidebarItemExpanded: %s', input$sel_menu, input$sidebarItemExpanded))
     
     leafletProxy('map_env') %>%    
       fitBounds(b[['xmin']], b[['ymin']], b[['xmax']], b[['ymax']]) %>%
@@ -274,15 +276,27 @@ shinyServer(function(input, output, session) {
     req(input$sel_eez)
     req(get_env_var()!='seascape')
     
+    var  = get_env_var()
+    v    = env_vars[[var]]
+    cols = c('chl'='green', 'sst'='red')[[var]]
+    
     x = get_env_eez() %>%
       mutate(
-        ymd = ymd(str_replace(raster, '^r_', '')),
+        ymd    = ymd(str_replace(raster, '^r_', '')),
+        mean   = v$transform(mean),
         lwr_sd = mean - sd,
         upr_sd = mean + sd) %>%
       select(ymd, mean, lwr_sd, upr_sd) %>%
       arrange(ymd)
     
+    # TODO: apply chl transform
+    
     x = xts(select(x, -ymd), order.by=x$ymd)
+    
+    dygraph(x, main=sprintf('%s for %s', v$dy_title, input$sel_eez)) %>%
+      dySeries(c('lwr_sd', 'mean', 'upr_sd')) %>%
+      dyAxis('y', label = v$dy_lab) %>%
+      dyOptions(colors = cols)
     
     # TODO: use months for climatology
     #the axis label is passed as a date, this function outputs only the month of the date
@@ -297,9 +311,6 @@ shinyServer(function(input, output, session) {
     #   //return monthNames[date.getMonth()] + " " +date.getUTCDate(); }
     #   return monthNames[date.getMonth()]; }'
     
-    dygraph(x, main=sprintf('%s for %s', env_vars[[get_env_var()]]$legend, input$sel_eez)) %>%
-      dySeries(c('lwr_sd', 'mean', 'upr_sd'), label = env_vars[[get_env_var()]]$legend) %>%
-      dyOptions(colors = c('chl'='green', 'sst'='red')[[get_env_var()]])
     
     # %>%
       #dyAxis("x",valueFormatter=JS(getMonthDay), axisLabelFormatter=JS(getMonth)) # %>%

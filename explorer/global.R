@@ -15,8 +15,8 @@ library(streamgraph) # devtools::install_github('hrbrmstr/streamgraph')
 # debug ----
 # https://shiny.rstudio.com/reference/shiny/latest/shiny-options.html
 options(
-  shiny.sanitize.errors = F, shiny.autoreload=T,
-  shiny.fullstacktrace=T, shiny.stacktraceoffset=T,
+  shiny.sanitize.errors = F, shiny.autoreload=F,
+  shiny.fullstacktrace=F, shiny.stacktraceoffset=T,
   shiny.trace=F, shiny.testmode=F, shiny.minified=T,
   shiny.deprecation.messages=T,
   shiny.reactlog=F)
@@ -27,7 +27,7 @@ msg = function(txt, debug=F){
 }
 
 # paths ----
-dir_wd = 'env3'
+dir_wd = 'explorer'
 if (basename(getwd())!=dir_wd) setwd(dir_wd)
 
 dir_local = switch(
@@ -88,7 +88,9 @@ get_wms_dates = function(xml, lyr){
 
 env_vars = list(
   chl     = list(
-    legend     = 'Chl (mg/m<sup>3</sup>)',
+    dy_title   = 'Chlorophyll', 
+    dy_lab     = 'Chl <i>a</i> (log(mg/m<sup>3</sup>))',
+    legend     = 'Chl <i>a</i> (mg/m<sup>3</sup>)',
     values     = seq(-6.91, 4.61, length.out = 7),
     pal        = colorNumeric('Greens', seq(-6.91, 4.61, length.out = 7), na.color='transparent'),
     transform  = function(x){ round(exp(x),2) },
@@ -104,6 +106,8 @@ env_vars = list(
     curr_dates = get_wms_dates(xml, 'gl_sea_curr_09km_mo'),
     curr_eez   = read_csv(sprintf('%s/raster-extract/eez_%s.csv', dir_local, 'gl_sea_curr_09km_mo'))),
   sst     = list(
+    dy_title   = 'Sea Surface Temperature', 
+    dy_lab     = 'SST (°C)',
     legend     = 'SST (°C)',
     values     = seq(-4, 36, length.out = 7),
     pal        = colorNumeric('Reds', seq(-4, 36, length.out = 7), na.color='transparent'),
@@ -114,7 +118,7 @@ env_vars = list(
 
 # defaults
 bio_var = 'n_spp'
-env_var = 'sst'
+env_var = 'chl'
 dates = env_vars[[env_var]][['curr_dates']] %>% sort()
 
 
