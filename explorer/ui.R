@@ -4,15 +4,17 @@ dashboardPage(
     title=tagList(icon('tint'), 'SDG14: Life in the Sea'),
     titleWidth = 250),
   dashboardSidebar(
-    width = 250, 
+    width = 250,
+    # side menu ----
     sidebarMenu(
       id = 'sel_menu',
       
       menuItem(
-        'Biological', tabName='bio', icon=icon('tree'), selected=T, startExpanded=T),
+        HTML('<span class="icon-octopus"></span> &nbsp;&nbsp; Biological'), tabName='bio', selected=T, startExpanded=T),
       menuItem(
         'Environmental', tabName = 'env', icon=icon('thermometer'))),
     
+    # side bio conditional ----
     conditionalPanel(
       condition = "input.sel_menu != 'env'",
       radioButtons(
@@ -21,14 +23,15 @@ dashboardPage(
           'Species Richness'  = 'n_spp',
           '# of Observations' = 'n_obs',
           'Protection Metric' = 'idx_obis_wdpa'),
-        selected = bio_var),
-      selectInput(
-        'rank', label = 'Taxa - Rank:', width='100%',
-        taxa_ranks, multiple=F), 
-      selectInput(
-        'taxa', label = 'Taxa - Values:', width='100%',
-        unique(eez_taxa[['taxonomicgroup']]), multiple=T)),
+        selected = bio_var)),
+      # selectInput(
+      #   'rank', label = 'Taxa - Rank:', width='100%',
+      #   taxa_ranks, multiple=F),
+      # selectInput(
+      #   'taxa', label = 'Taxa - Values:', width='100%',
+      #   unique(eez_taxa[['taxonomicgroup']]), multiple=T)),
     
+    # side env conditional ----
     conditionalPanel(
       condition = "input.sel_menu == 'env'",
       radioButtons(
@@ -45,7 +48,24 @@ dashboardPage(
           'Temperature'),
         selected = env_var)),
     
-    selectizeInput('sel_eez', 'EEZ - Territory', c('', eez_sf$sov_ter), selected='')),
+    # side eez ----
+    selectizeInput('sel_eez', 'EEZ - Territory', c('', eez_sf$sov_ter), selected=''),
+    
+    # side save ----
+    actionButton('btn_save', 'Save Plot', icon=icon('save')),
+    tags$div(id='ui_plots'),
+    conditionalPanel(
+      condition = "input.sel_plots != null",               
+      div(
+        style='margin: 6px 5px 6px 15px;',
+        actionButton('btn_open_plot', 'Open Plot', icon=icon('folder-open-o')),
+        dropdownButton(
+          label = 'Save Report', icon=icon('file-o'), circle=F, size='sm',
+          #bookmarkButton(id='btn_bookmark'),
+          actionButton('btn_download_url', 'Bookmark (url)', icon=icon('bookmark-o')),
+          downloadButton('btn_download_pdf', 'Portable (*.pdf)', icon=icon('file-pdf-o')),
+          downloadButton('btn_download_doc', 'Word (*.docx)', icon=icon('file-word-o')),
+          downloadButton('btn_download_htm', 'Web (*.html)', icon=icon('file-text-o')))))),
   
   #selectInput(
   # 'sel_temporal', 'Temporal:', 
@@ -53,9 +73,12 @@ dashboardPage(
   
   dashboardBody(
     tags$head(
-      tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")),
+      tags$link(rel = "stylesheet", type = "text/css", href = "custom.css"),
+      tags$link(rel = "stylesheet", type = "text/css", href = "icomoon.io_mbon/style.css")),
+    
     tabItems(
       
+      # body env ----
       tabItem(
         tabName='env', fluidRow(
           
@@ -63,7 +86,7 @@ dashboardPage(
           id = 'tabset_env_viz', width=12,
           
           tabPanel(
-            'Spatial',
+            'Spatial', value='spatial',
             leafletOutput('map_env', height = 550),
             sliderInput(
               'sel_env_ym', 'Date:', 
@@ -73,14 +96,18 @@ dashboardPage(
           
           tabPanel(
             #tagList(icon('line-chart'), 'Temporal'),
-            'Temporal',
+            'Temporal', value='temporal',
+            conditionalPanel(
+              condition = "input.sel_eez == ''",
+              p('Please choose an EEZ to produce plots over time.')),
             conditionalPanel(
               condition = "input.sel_env_var != 'seascape'",
               dygraphOutput('env_ts_dygraph')),
             conditionalPanel(
               condition = "input.sel_env_var == 'seascape'",
               streamgraphOutput('env_ts_streamgraph')))))),
-          
+         
+      # body bio ---- 
       tabItem(
         tabName='bio',
         
