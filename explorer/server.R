@@ -491,6 +491,14 @@ shinyServer(function(input, output, session) {
     }
   }
   
+  # meta: info popups ----
+  observeEvent(input$meta_n_spp, { showModal(modalDialog(includeMarkdown('metadata/n_spp.md'), title='Species Richness')) })
+  observeEvent(input$meta_n_obs, { showModal(modalDialog(includeMarkdown('metadata/n_obs.md'), title='# of Observations')) })
+  observeEvent(input$meta_idx_obis_wdpa, { showModal(modalDialog(includeMarkdown('metadata/idx_obis_wdpa.md'), title='Protection Metric')) })
+  observeEvent(input$meta_chl, { showModal(modalDialog(includeMarkdown('metadata/chl.md'), title='Chlorophyll')) })
+  observeEvent(input$meta_sst, { showModal(modalDialog(includeMarkdown('metadata/sst.md'), title='Sea Surface Temperature')) })
+  observeEvent(input$meta_seascape, { showModal(modalDialog(includeMarkdown('metadata/seascape.md'), title='Seascape')) })
+  
   # env: seascape modal ----
   observeEvent(input$show_seascape_info, {
     showModal(modalDialog(

@@ -19,10 +19,15 @@ dashboardPage(
       condition = "input.sel_menu != 'env'",
       radioButtons(
         'sel_bio_var', label=NULL,
-        choices = list(
-          'Species Richness'  = 'n_spp',
-          '# of Observations' = 'n_obs',
-          'Protection Metric' = 'idx_obis_wdpa'),
+        # choices = list(
+        #   'Species Richness'  = 'n_spp',
+        #   '# of Observations' = 'n_obs',
+        #   'Protection Metric' = 'idx_obis_wdpa'),
+        choiceValues = list('n_spp','n_obs','idx_obis_wdpa'),
+        choiceNames = list(
+          actionLink('meta_n_spp', 'Species Richness'),
+          actionLink('meta_n_obs', '# of Observations'),
+          actionLink('meta_idx_obis_wdpa', 'Protection Metric')),
         selected = bio_var)),
       # selectInput(
       #   'rank', label = 'Taxa - Rank:', width='100%',
@@ -38,14 +43,15 @@ dashboardPage(
         'sel_env_var', label=NULL,
         choiceValues = list('chl','seascape','sst'),
         choiceNames = list(
-          'Chlorophyll',
-          tagList(
-            span('Seascape',class="control-label", 
-            actionLink(
-              'show_seascape_info', 
-              label=NULL, 
-              icon=icon('question-circle', class='fa-li')))),
-          'Temperature'),
+          actionLink('meta_chl', 'Chlorophyll'),
+          actionLink('meta_seascape', 'Seascape'),
+          # tagList(
+          #   span('Seascape',class="control-label", 
+          #   actionLink(
+          #     'show_seascape_info', 
+          #     label=NULL, 
+          #     icon=icon('question-circle', class='fa-li')))),
+          actionLink('meta_sst', 'Temperature')),
         selected = env_var)),
     
     # side eez ----
