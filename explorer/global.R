@@ -92,7 +92,7 @@ eez_territories = eez_sf %>% filter(!is.na(n_obs)) %>% .$Territory1
 
 # env layers ----
 # get dates from WMS layer time list
-wms_xml = file.path(dir_local, 'wms.xml')
+wms_xml = file.path(dir_local, 'shiny_tmp/wms.xml')
 wms_url = 'http://mbon.marine.usf.edu:8080/geoserver/ows?service=wms&version=1.3.0&request=GetCapabilities'
 if (!file.exists(wms_xml)){
   download.file(wms_url, wms_xml)
