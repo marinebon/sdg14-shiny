@@ -9,6 +9,7 @@ output:
   html_document:
     number_sections: yes
     toc: yes
+always_allow_html: yes
 date: '`r format(Sys.time(), "%Y-%m-%d %H:%M:%S")`'
 params:
   url: "http://127.0.0.1:3896/"
@@ -210,11 +211,11 @@ You can modify these plots interactively and regenerate this report here:
 
 ```{r , fig.cap='<%= p$txt_plot_caption %>'}
 
-<% if (p$sel_menu == 'bio') { -%>
+<% if (length(p$sel_menu) == 0 || p$sel_menu == 'bio') { -%>
 bio_map('<%= p$bio_var %>', '<%= p$sel_eez %>')
 <% } -%>
 
-<% if (p$sel_menu == 'env') { -%>
+<% if (length(p$sel_menu) != 0 && p$sel_menu == 'env') { -%>
   <% if (p$env_viz == 'spatial') { -%>
   env_map('<%= p$env_var %>', '<%= p$env_ymd %>', '<%= p$sel_eez %>')
   <% } -%>

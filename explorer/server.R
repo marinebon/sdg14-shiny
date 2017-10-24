@@ -322,7 +322,7 @@ shinyServer(function(input, output, session) {
     
     # suggest a title
     title = ''
-    if (input$sel_menu == 'bio'){
+    if (length(input$sel_menu) == 0 || input$sel_menu == 'bio'){
       title = c('n_spp'='Species','n_obs'='Observations','idx_obis_wdpa'='Protection')[get_bio_var()]
       title = paste(title, 'Map')
     } else {
@@ -380,11 +380,11 @@ shinyServer(function(input, output, session) {
       sel_menu         = input$sel_menu,
       sel_eez          = input$sel_eez)
     
-    if (p$sel_menu == 'bio'){
+    if (length(p$sel_menu) == 0 || p$sel_menu == 'bio'){
       p$bio_var = get_bio_var()
     }
       
-    if (p$sel_menu == 'env'){
+    if (length(p$sel_menu) != 0 && p$sel_menu == 'env'){
       p$env_var = get_env_var()
       p$env_ymd = get_env_ymd()
       p$env_viz = input$tabset_env_viz
@@ -394,7 +394,7 @@ shinyServer(function(input, output, session) {
     }
       
     values$saved_plots <- c(values$saved_plots, list(p))
-    #cat(file=stderr(), c('values$saved_plots', str(values$saved_plots)))
+    cat(file=stderr(), c('values$saved_plots', str(values$saved_plots)))
 
     removeModal()
   })
@@ -474,7 +474,7 @@ shinyServer(function(input, output, session) {
     updateSelectizeInput(session, 'sel_eez', selected = p$sel_eez)
     
     values$env_datewindow = NULL
-    if (p$sel_menu == 'bio'){
+    if (length(p$sel_menu)==0 || p$sel_menu == 'bio'){
       updateTabItems(session, 'sel_menu', 'bio')
       updateRadioButtons(session, 'sel_bio_var', selected=p$bio_var)
     } else {
