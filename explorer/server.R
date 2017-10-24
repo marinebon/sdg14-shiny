@@ -388,10 +388,9 @@ shinyServer(function(input, output, session) {
       p$env_var = get_env_var()
       p$env_ymd = get_env_ymd()
       p$env_viz = input$tabset_env_viz
-    }
-    
-    if (p$sel_menu == 'env' && p$env_viz == 'temporal' && p$env_var!='seascape'){
-      p$env_datewindow = input$env_ts_dygraph_date_window
+      if (p$env_viz == 'temporal' && p$env_var!='seascape'){
+        p$env_datewindow = input$env_ts_dygraph_date_window %>% str_split(' ', simplify = T) %>% as_date()
+      }
     }
       
     values$saved_plots <- c(values$saved_plots, list(p))
@@ -439,9 +438,10 @@ shinyServer(function(input, output, session) {
         url = bkmark(session)
         plots = values$saved_plots
 
-        #tmp_rmd = tempfile('mbon-sdg14-plots_', fileext='.Rmd')
-        tmp_rmd = paste0('mbon-sdg14-plots_', str_replace_all(format(Sys.time(), tz='GMT'), '[ ]', '.'), '-GMT.Rmd')
-        brew('report_brew.Rmd', tmp_rmd)
+        tmp_rmd = tempfile('mbon-sdg14-plots_', fileext='.Rmd')
+        #tmp_rmd = paste0('mbon-sdg14-plots_', str_replace_all(format(Sys.time(), tz='GMT'), '[ ]', '.'), '-GMT.Rmd')
+        brew('report_brew.Rmd', output=tmp_rmd) # system(sprintf('open %s', tmp_rmd))
+        #browser()
         render(tmp_rmd, output_format=out_fmt, output_file=file, params = list(url=url))
         unlink(tmp_rmd)
         })
@@ -453,7 +453,8 @@ shinyServer(function(input, output, session) {
   # save: btn_download_url ----
   observeEvent(input$btn_download_url, {
     url = bkmark(session)
-    browseURL(url)
+    showModal(urlModal(url, title='Bookmarked application link'))
+    #browseURL(url)
   })
   
   # save: onRestored ----

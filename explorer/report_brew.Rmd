@@ -18,7 +18,7 @@ params:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = F)
 
-source('global.R')
+source("<%=file.path(getwd(), 'global.R')%>")
 
 bio_map = function(bio_var, sel_eez){
   #bio_map('n_spp', 'Albania')
@@ -209,18 +209,23 @@ You can modify these plots interactively and regenerate this report here:
 # <%= p$txt_plot_title %>
 
 ```{r , fig.cap='<%= p$txt_plot_caption %>'}
+
 <% if (p$sel_menu == 'bio') { -%>
 bio_map('<%= p$bio_var %>', '<%= p$sel_eez %>')
 <% } -%>
-<% if (p$sel_menu == 'env' & p$env_viz == 'spatial') { -%>
-env_map('<%= p$env_var %>', '<%= p$env_ymd %>', '<%= p$sel_eez %>')
+
+<% if (p$sel_menu == 'env') { -%>
+  <% if (p$env_viz == 'spatial') { -%>
+  env_map('<%= p$env_var %>', '<%= p$env_ymd %>', '<%= p$sel_eez %>')
+  <% } -%>
+  <% if (p$env_viz == 'temporal' & p$env_var != 'seascape') { -%>
+  env_dygraph('<%= p$env_var %>', '<%= p$sel_eez %>', '<%= paste(as.character(p$env_datewindow)) %>')
+  <% } -%>
+  <% if (p$env_viz == 'temporal' & p$env_var == 'seascape') { -%>
+  env_streamgraph('<%= p$env_var %>', '<%= p$sel_eez %>')
+  <% } -%>
 <% } -%>
-<% if (p$sel_menu == 'env' & p$env_viz == 'temporal' & p$env_var != 'seascape') { -%>
-env_dygraph('<%= p$env_var %>', '<%= p$sel_eez %>', '<%= paste(as.character(p$env_datewindow)) %>')
-<% } -%>
-<% if (p$sel_menu == 'env' & p$env_viz == 'temporal' & p$env_var == 'seascape') { -%>
-env_streamgraph('<%= p$env_var %>', '<%= p$sel_eez %>')
-<% } -%>
+
 ```
 
 <% } -%>
