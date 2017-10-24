@@ -1,0 +1,226 @@
+---
+title: "MBON SDG14 Plots"
+output:
+  word_document:
+    toc: yes
+  pdf_document:
+    number_sections: yes
+    toc: yes
+  html_document:
+    number_sections: yes
+    toc: yes
+date: '`r format(Sys.time(), "%Y-%m-%d %H:%M:%S")`'
+params:
+  url: "http://127.0.0.1:3896/"
+  env_vars: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+
+source('global.R')
+
+bio_map = function(bio_var, sel_eez){
+  #bio_map('n_spp', 'Albania')
+  # bio_var='n_spp'; sel_eez='Albania'
+  
+    colpal = colorNumeric('Spectral', eez_sf[[bio_var]])
+    
+    eez_labels <- sprintf(
+      "<strong>%s</strong><br/>%s: %g",
+      eez_sf$sov_ter, bio_var, eez_sf[[bio_var]]
+    ) %>% lapply(HTML)
+    
+    if (length(sel_eez) == 1 && sel_eez == ''){
+      b = eez_sf %>%
+        st_bbox()
+    } else {
+      b = eez_sf %>%
+        filter(sov_ter %in% sel_eez) %>%
+        st_bbox()
+    }
+    
+    m = leaflet(
+      options=leafletOptions(
+        minZoom=2, worldCopyJump=T,
+        attributionControl=F, zoomControl=F)) %>%
+      addProviderTiles("Stamen.TonerLite", group='Gray Land') %>%
+      addPolygons(
+        data=eez_sf,
+        group = 'Bio metric',
+        layerId = ~sov_ter,
+        fillColor = ~colpal(eez_sf[[bio_var]]),
+        fillOpacity = 0.7,
+        weight = 2,
+        opacity = 1,
+        color = 'white',
+        highlight = highlightOptions(
+          weight = 5,
+          color = "#666",
+          bringToFront = TRUE),
+        label = eez_labels,
+        labelOptions = labelOptions(
+          style = list("font-weight" = "normal", padding = "3px 8px"),
+          textsize = "15px",
+          direction = "auto")) %>%
+      addLegend(
+        title=HTML(c('n_spp'='# species','n_obs'='# obs','idx_obis_wdpa'='protection<br>metric')[bio_var]),
+        pal = colpal, values = eez_sf[[bio_var]], opacity = 0.7,
+        position = "bottomright") %>%
+      fitBounds(b[['xmin']], b[['ymin']], b[['xmax']], b[['ymax']]) %>%
+      addPolygons(
+        data = eez_sf %>%
+          filter(sov_ter %in% sel_eez),
+        group = 'eez_hi',
+        fill = F,
+        weight = 4,
+        color = 'yellow') %>%
+      addScaleBar('bottomleft')
+    m
+}
+
+env_map = function(env_var, env_ymd, sel_eez){
+  
+  v = env_vars[[env_var]]
+  
+  if (length(sel_eez) == 1 && sel_eez == ''){
+      b = eez_sf %>%
+        st_bbox()
+    } else {
+      b = eez_sf %>%
+        filter(sov_ter %in% sel_eez) %>%
+        st_bbox()
+    }
+  
+  #browser()
+  m = leaflet(
+    options=c(
+      leafletOptions(
+        minZoom=2,
+        worldCopyJump=T),
+      attributionControl=F)) %>%
+    addProviderTiles("Stamen.TonerLite", group='Gray Land') %>% 
+    # eez
+    addPolygons(
+      data=eez_sf,
+      group = 'EEZ',
+      layerId = ~sov_ter,
+      fillColor = NA,
+      weight = 2,
+      opacity = 1,
+      color = 'white',
+      #fillOpacity = 0.7,
+      highlight = highlightOptions(
+        weight = 5,
+        color = "#666",
+        #fillOpacity = 0.7,
+        bringToFront = TRUE),
+      label = eez_labels,
+      labelOptions = labelOptions(
+        style = list("font-weight" = "normal", padding = "3px 8px"),
+        textsize = "15px",
+        direction = "auto")) %>%
+    # env
+    addWMSTiles(
+      baseUrl = 'http://mbon.marine.usf.edu:8080/geoserver/satellite/wms',
+      group = 'env', layers = v[['curr_lyr']],
+      options = WMSTileOptions(
+        version = '1.3.0', format  = 'image/png', transparent = T,
+        time    = env_ymd)) %>%
+    addLegend(
+      pal = v$pal, values = v$values,
+      position = 'bottomright',
+      labFormat = labelFormat(transform = v$transform),
+      title = v$legend) %>%
+    # zoom
+    fitBounds(b[['xmin']], b[['ymin']], b[['xmax']], b[['ymax']]) %>%
+    addPolygons(
+      data = eez_sf %>%
+        filter(sov_ter %in% sel_eez),
+      group = 'eez_hi',
+      fill = F,
+      weight = 4,
+      color = 'yellow') %>%
+    addScaleBar('bottomleft')
+  m
+}
+
+env_dygraph = function(env_var, sel_eez, env_datewindow){
+  
+  v    = env_vars[[env_var]]
+  date_window = str_split(env_datewindow, ' ', simplify=T) %>% as_date()
+  cols = c('chl'='green', 'sst'='red')[[env_var]]
+  
+  eez_mrgids = eez_sf %>%
+    st_set_geometry(NULL) %>%
+    filter(sov_ter == sel_eez) %>%
+    .$MRGID
+  
+  x = env_vars[[env_var]][['curr_eez']] %>%
+    filter(eez_mrgid %in% eez_mrgids) %>%
+    mutate(
+      ymd    = ymd(str_replace(raster, '^r_', '')),
+      mean   = v$transform(mean),
+      lwr_sd = mean - sd,
+      upr_sd = mean + sd) %>%
+    select(ymd, mean, lwr_sd, upr_sd) %>%
+    arrange(ymd)
+  
+  # TODO: apply chl transform
+  
+  x = xts(select(x, -ymd), order.by=x$ymd)
+  
+  dygraph(x, main=sprintf('%s for %s', v$dy_title, sel_eez)) %>%
+    dySeries(c('lwr_sd', 'mean', 'upr_sd')) %>%
+    dyAxis('y', label = v$dy_lab) %>%
+    dyOptions(colors = cols) %>% 
+    dyRangeSelector(dateWindow = date_window)
+}
+
+env_streamgraph = function(env_var, sel_eez){
+  eez_mrgids = eez_sf %>%
+    st_set_geometry(NULL) %>%
+    filter(sov_ter == sel_eez) %>%
+    .$MRGID
+  
+  x = env_vars[[env_var]][['curr_eez']] %>%
+    filter(eez_mrgid %in% eez_mrgids) %>%
+    mutate(
+      ymd = ymd(str_replace(raster, '^r_', ''))) %>%
+    select(ymd, class=value, area_km2) %>%
+    arrange(ymd, class)
+  
+  # TODO: fix palette to match raster -- streamgraph problem
+  # TODO: figure out time zoom in/out for streamgraph, possibly combined w/ dygraph
+  streamgraph(x, 'class', 'area_km2', 'ymd') %>%
+    sg_legend(show=T, label="Class:") %>%
+    sg_fill_manual(env_vars$seascape$pal(1:14))
+}
+```
+
+You can modify these plots interactively and regenerate this report here:
+
+`r params$url`
+
+<% for (i in seq_along(plots)) { -%>
+
+<% p = plots[[i]] %>
+
+# <%= p$txt_plot_title %>
+
+```{r , fig.cap='<%= p$txt_plot_caption %>'}
+<% if (p$sel_menu == 'bio') { -%>
+bio_map('<%= p$bio_var %>', '<%= p$sel_eez %>')
+<% } -%>
+<% if (p$sel_menu == 'env' & p$env_viz == 'spatial') { -%>
+env_map('<%= p$env_var %>', '<%= p$env_ymd %>', '<%= p$sel_eez %>')
+<% } -%>
+<% if (p$sel_menu == 'env' & p$env_viz == 'temporal' & p$env_var != 'seascape') { -%>
+env_dygraph('<%= p$env_var %>', '<%= p$sel_eez %>', '<%= paste(as.character(p$env_datewindow)) %>')
+<% } -%>
+<% if (p$sel_menu == 'env' & p$env_viz == 'temporal' & p$env_var == 'seascape') { -%>
+env_streamgraph('<%= p$env_var %>', '<%= p$sel_eez %>')
+<% } -%>
+```
+
+<% } -%>

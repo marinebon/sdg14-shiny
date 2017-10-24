@@ -31,6 +31,7 @@ shinyServer(function(input, output, session) {
           style = list("font-weight" = "normal", padding = "3px 8px"),
           textsize = "15px",
           direction = "auto")) %>%
+      addScaleBar('bottomleft') %>%
       # env
       addWMSTiles(
         baseUrl = 'http://mbon.marine.usf.edu:8080/geoserver/satellite/wms',
@@ -98,6 +99,7 @@ shinyServer(function(input, output, session) {
       addLayersControl(
         baseGroups    = c('Gray Land','Color Ocean'),
         overlayGroups = c('Bio metric'), options = layersControlOptions(collapsed=T)) %>%
+      addScaleBar('bottomleft') %>%
       fitBounds(b[['xmin']], b[['ymin']], b[['xmax']], b[['ymax']]) %>%
       clearGroup('eez_hi') %>%
       addPolygons(
@@ -128,18 +130,18 @@ shinyServer(function(input, output, session) {
   })
   
   # bio: taxa update ----
-  observe({
-    
-    if (is.null(input$rank)){
-      x <- character(0)
-    } else {
-      x <- unique(eez_taxa[[input$rank]])
-    }
-    
-    updateSelectInput(
-      session, 'taxa',
-      choices = x)
-  })
+  # observe({
+  # 
+  #   if (is.null(input$rank)){
+  #     x <- character(0)
+  #   } else {
+  #     x <- unique(eez_taxa[[input$rank]])
+  #   }
+  # 
+  #   updateSelectInput(
+  #     session, 'taxa',
+  #     choices = x)
+  # })
   
   # env: reactives ----
   get_env_var = reactive({
@@ -176,7 +178,7 @@ shinyServer(function(input, output, session) {
     env_vars[[get_env_var()]][['curr_eez']] %>%
       filter(eez_mrgid %in% eez_mrgids)
   })
-    
+  
   # env: map update ----
   observe({
     msg('update env WMSTiles - leafletProxy()')
@@ -220,6 +222,8 @@ shinyServer(function(input, output, session) {
     # TODO: based on default menu, only zoom to visible map
     #browser()
     #msg(sprintf('sel_menu: %s, sidebarItemExpanded: %s', input$sel_menu, input$sidebarItemExpanded))
+    
+    # browser()
     
     leafletProxy('map_env') %>%    
       fitBounds(b[['xmin']], b[['ymin']], b[['xmax']], b[['ymax']]) %>%
@@ -296,7 +300,8 @@ shinyServer(function(input, output, session) {
     dygraph(x, main=sprintf('%s for %s', v$dy_title, input$sel_eez)) %>%
       dySeries(c('lwr_sd', 'mean', 'upr_sd')) %>%
       dyAxis('y', label = v$dy_lab) %>%
-      dyOptions(colors = cols)
+      dyOptions(colors = cols) %>% 
+      dyRangeSelector(values$env_datewindow)
     
     # TODO: use months for climatology
     #the axis label is passed as a date, this function outputs only the month of the date
@@ -321,9 +326,25 @@ shinyServer(function(input, output, session) {
   # save: button ----
   observeEvent(input$btn_save, {
     
+    # suggest a title
+    title = ''
+    if (input$sel_menu == 'bio'){
+      title = c('n_spp'='Species','n_obs'='Observations','idx_obis_wdpa'='Protection')[get_bio_var()]
+      title = paste(title, 'Map')
+    } else {
+      title = c('chl'='Chlorophyll','seascape'='Seascapes','sst'='SST')[get_env_var()]
+      if (input$tabset_env_viz == 'temporal'){
+        title = paste(title, 'Timeseries')
+      } else {
+        title = paste(title, 'Map at', get_env_ymd())
+      }
+    }
+    if (input$sel_eez > '')
+      title = paste(title, 'for', input$sel_eez)
+    
     showModal(modalDialog(
       title='Save Plot',
-      textInput('txt_plot_title', 'Title', value='Global Seascape Map'),
+      textInput('txt_plot_title', 'Title', value=title),
       textAreaInput('txt_plot_caption', 'Caption', value=''),
       #HTML('TODO: associate with element in svg infographic scene'),
       footer = tagList(
@@ -333,7 +354,7 @@ shinyServer(function(input, output, session) {
   })
   
   # save: reactives ----
-  values = reactiveValues(saved_plots = list())
+  values = reactiveValues(saved_plots = list(), env_datewindow=NULL)
 
   plot_titles = function(){
     values$saved_plots %>% map_chr(function(x) x$txt_plot_title) }
@@ -357,11 +378,28 @@ shinyServer(function(input, output, session) {
   # save: modal ----
   observeEvent(input$btn_save_plot, {
     
+    
+    #browser()
     p = list(
       txt_plot_title   = input$txt_plot_title,
       txt_plot_caption = input$txt_plot_caption,
+      sel_menu         = input$sel_menu,
       sel_eez          = input$sel_eez)
     
+    if (p$sel_menu == 'bio'){
+      p$bio_var = get_bio_var()
+    }
+      
+    if (p$sel_menu == 'env'){
+      p$env_var = get_env_var()
+      p$env_ymd = get_env_ymd()
+      p$env_viz = input$tabset_env_viz
+    }
+    
+    if (p$sel_menu == 'env' && p$env_viz == 'temporal' && p$env_var!='seascape'){
+      p$env_datewindow = input$env_ts_dygraph_date_window
+    }
+      
     values$saved_plots <- c(values$saved_plots, list(p))
     #cat(file=stderr(), c('values$saved_plots', str(values$saved_plots)))
 
@@ -394,30 +432,29 @@ shinyServer(function(input, output, session) {
   observeEvent(input$btn_open_plot, {
     req(input$sel_plots)
     
-    #browser()
-    #url_plot = values$saved_plots[[input$sel_plots]][['url']]
-    
     load_plot(input$sel_plots)
-    #browseURL(url_plot)
   })
   
-  download_report = function(output_fmt){
+  # save: download report pdf/doc/htm ----
+  download_report = function(out_fmt, out_ext){
     downloadHandler(
       filename = function() {
-        paste0('mbon-sdg14-plots_', str_replace_all(format(Sys.time(), tz='GMT'), '[ ]', '.'), '-GMT.pdf')},
+        paste0('mbon-sdg14-plots_', str_replace_all(format(Sys.time(), tz='GMT'), '[ ]', '.'), '-GMT.', out_ext)},
       content = function(file) {
+        
         url = bkmark(session)
-        render('report.Rmd', output_format=output_fmt, output_file=file, params = list(url=url))})
-  }
-  
-  # save: btn_download_pdf ----
-  output$btn_download_pdf = download_report('pdf_document')
-  output$btn_download_doc = download_report('pdf_document')
-  output$btn_download_htm = download_report('pdf_document')
+        plots = values$saved_plots
 
-# plots2rmd = function(values$saved_plots){
-#   
-# }
+        #tmp_rmd = tempfile('mbon-sdg14-plots_', fileext='.Rmd')
+        tmp_rmd = paste0('mbon-sdg14-plots_', str_replace_all(format(Sys.time(), tz='GMT'), '[ ]', '.'), '-GMT.Rmd')
+        brew('report_brew.Rmd', tmp_rmd)
+        render(tmp_rmd, output_format=out_fmt, output_file=file, params = list(url=url))
+        unlink(tmp_rmd)
+        })
+  }
+  output$btn_download_pdf = download_report('pdf_document','pdf')
+  output$btn_download_doc = download_report('word_document','docx')
+  output$btn_download_htm = download_report('html_document','html')
   
   # save: btn_download_url ----
   observeEvent(input$btn_download_url, {
@@ -435,10 +472,28 @@ shinyServer(function(input, output, session) {
   })
   
   load_plot = function(plot_title){
+    #browser()
     p = values$saved_plots[[which(plot_title == plot_titles())]]
     
     cat("Selecting EEZ", p$sel_eez, "\n", file=stderr())
     updateSelectizeInput(session, 'sel_eez', selected = p$sel_eez)
+    
+    values$env_datewindow = NULL
+    if (p$sel_menu == 'bio'){
+      updateTabItems(session, 'sel_menu', 'bio')
+      updateRadioButtons(session, 'sel_bio_var', selected=p$bio_var)
+    } else {
+      updateTabItems(session, 'sel_menu', 'env')
+      updateRadioButtons(session, 'sel_env_var', selected=p$env_var)
+      if (p$env_viz == 'spatial'){
+        updateTabItems(session, 'tabset_env_viz', 'spatial')
+      } else {
+        updateTabItems(session, 'tabset_env_viz', 'temporal')
+        if (p$env_var!='seascape'){
+          values$env_datewindow = p$env_datewindow
+        }
+      }
+    }
   }
   
   # env: seascape modal ----

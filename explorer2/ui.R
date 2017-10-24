@@ -23,13 +23,13 @@ dashboardPage(
           'Species Richness'  = 'n_spp',
           '# of Observations' = 'n_obs',
           'Protection Metric' = 'idx_obis_wdpa'),
-        selected = bio_var),
-      selectInput(
-        'rank', label = 'Taxa - Rank:', width='100%',
-        taxa_ranks, multiple=F), 
-      selectInput(
-        'taxa', label = 'Taxa - Values:', width='100%',
-        unique(eez_taxa[['taxonomicgroup']]), multiple=T)),
+        selected = bio_var)),
+      # selectInput(
+      #   'rank', label = 'Taxa - Rank:', width='100%',
+      #   taxa_ranks, multiple=F),
+      # selectInput(
+      #   'taxa', label = 'Taxa - Values:', width='100%',
+      #   unique(eez_taxa[['taxonomicgroup']]), multiple=T)),
     
     # side env conditional ----
     conditionalPanel(
@@ -86,7 +86,7 @@ dashboardPage(
           id = 'tabset_env_viz', width=12,
           
           tabPanel(
-            'Spatial',
+            'Spatial', value='spatial',
             leafletOutput('map_env', height = 550),
             sliderInput(
               'sel_env_ym', 'Date:', 
@@ -96,7 +96,10 @@ dashboardPage(
           
           tabPanel(
             #tagList(icon('line-chart'), 'Temporal'),
-            'Temporal',
+            'Temporal', value='temporal',
+            conditionalPanel(
+              condition = "input.sel_eez == ''",
+              p('Please choose an EEZ to produce plots over time.')),
             conditionalPanel(
               condition = "input.sel_env_var != 'seascape'",
               dygraphOutput('env_ts_dygraph')),
