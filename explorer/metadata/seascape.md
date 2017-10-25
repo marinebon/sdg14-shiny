@@ -1,19 +1,19 @@
 Seascape class definitions:
 
-1. Highly oligotrophic subtropical gyres
-1. Oligotrophic subtropics
-1. Equatorial oligotrophic boundary
-1. Subtropical transition zone
-1. Equatorial mesotrophic
-1. Subpolar mesotrophic transition
-1. Subpolar HNLC
-1. Temperate shelf/transition
-1. Subpolar mesotrophic shelf
-1. Subtropical/Equatorial upwelling
-1. Temperate/subpolar productive pelagic
-1. Subtropical/tropical productive shelves
-1. Temperate upwelling/polar shelves
-1. Polar seasonal ice edge
+1. Highly oligotrophic subtropical Gyres
+2. Temperate Oligo-mesotrophic HNLC
+3. Equatorial oligo-mesotrophic
+4. Subtropical (oligotrophic) transition zone
+5. Equatorial oligotrophic
+6. Gyre edge, Mediterranean highly oligotrophic
+7. Subpolar (mesotrophic) transition zone
+8. Coastal, warm and highly productive
+9. Warm mesotrophic/productive
+10. Subpolar cold HNLC
+11. Temperate and subpolar productive shelves/transition zone
+12. Highly productive shelves
+13. Extremely high productive temperate upwelling/subpolar seas
+14. Polar mesotrophic shelves
 
 Seascapes were derived by Dr. Maria Kavanaugh et al using an ordination technique on different ocean color characteristics:
 
