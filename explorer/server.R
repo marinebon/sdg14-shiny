@@ -5,12 +5,15 @@ shinyServer(function(input, output, session) {
     msg('leaflet map_env, initial - renderLeaflet()')
     
     leaflet(
-      options=c(
-        leafletOptions(
-          minZoom=2,
-          worldCopyJump=T),
-        attributionControl=F)) %>%
-      addProviderTiles("Stamen.TonerLite", group='Gray Land') %>% 
+      #elementId = "map_env",
+      options = leafletOptions(
+        crs                = leafletCRS(crsClass = "L.CRS.EPSG4326"),
+        minZoom            = 2,
+        worldCopyJump      = T,
+        attributionControl = F)) %>% 
+      #addProviderTiles("Stamen.TonerLite", group='Gray Land') %>% 
+      # basemap from GBIF in 4326
+      addTiles("//tile.gbif.org/4326/omt/{z}/{x}/{y}@1x.png?style=gbif-geyser") %>% 
       # eez
       addPolygons(
         data=eez_sf,
@@ -33,12 +36,27 @@ shinyServer(function(input, output, session) {
           direction = "auto")) %>%
       addScaleBar('bottomleft') %>%
       # env
+      # addWMSTiles(
+      #   baseUrl = 'http://mbon.marine.usf.edu:8080/geoserver/satellite/wms',
+      #   group = 'env', layers = env_vars[[env_var]][['curr_lyr']],
+      #   options = WMSTileOptions(
+      #     version = '1.3.0', format  = 'image/png', transparent = T,
+      #     time    = dates[1]))
+      # sst
       addWMSTiles(
-        baseUrl = 'http://mbon.marine.usf.edu:8080/geoserver/satellite/wms',
-        group = 'env', layers = env_vars[[env_var]][['curr_lyr']],
+        baseUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/wms/jplMURSST41mday/request?',
+        layers = "jplMURSST41mday:sst", # layers = env_vars[[env_var]][['curr_lyr']],
+        group = 'env', 
         options = WMSTileOptions(
-          version = '1.3.0', format  = 'image/png', transparent = T,
-          time    = dates[1]))
+          version = "1.3.0", format = "image/png", transparent = T, opacity = 0.7,
+          #time = format(d,"%Y-%m-%dT00:00:00Z")))  %>%
+          time = dates[1]))  %>%
+      #addMouseCoordinates() %>% 
+      #fitBounds(site$lon - b, site$lat - b, site$lon + b, site$lat + b) %>% 
+      addLegend(
+        position="bottomright", 
+        title = paste0("SST (°C)<br>", format(dates[1],"%Y-%m-%d")),
+        colorNumeric("Spectral", c(0,32), reverse=T), seq(0,32))
   })
   
   # bio: map ----
@@ -158,7 +176,7 @@ shinyServer(function(input, output, session) {
   
   get_env_ymd = reactive({
     if (!is.null(input$sel_env_ym)){
-      ymd =  sprintf('%s-15', str_sub(as.character(input$sel_env_ym), 1,7))
+      ymd =  sprintf('%s-15T12:00:00Z', str_sub(as.character(input$sel_env_ym), 1,7))
     } else {
       if (!is.null(input$sel_env_var))
         env_var = input$sel_env_var
@@ -181,27 +199,47 @@ shinyServer(function(input, output, session) {
   
   # env: map update ----
   observe({
-    msg('update env WMSTiles - leafletProxy()')
+    
 
     # ensure date match with time slice
     #msg(sprintf('  input$sel_menu=%s, get_env_var()="%s", get_env_ymd()="%s"', input$sel_menu, get_env_var(), get_env_ymd()))
     v = env_vars[[get_env_var()]]
     
+    wms_url = glue("{v$erddap}wms/{v$datasetid}/request?"
+    wms_lyr = glue("{v$datasetid}:{layer}")
+    
+    # https://coastwatch.pfeg.noaa.gov/erddap/wms/jplMURSST41/request?service=WMS&version=1.3.0&request=GetMap&bbox=-89.99,-179.99,89.99,180.0&time=2002-06-01T09:00:00Z&crs=EPSG:4326&width=360&height=180&layers=jplMURSST41:analysed_sst&format=image/png
+    url_test = glue("{wms_url}service=WMS&version=1.3.0&request=GetMap&bbox=-89.99,-179.99,89.99,180.0&time={get_env_ymd()}&crs=EPSG:4326&width=360&height=180&layers={wms_layer}&format=image/png")
+    msg('update env WMSTiles - leafletProxy()')
+    msg(url_test)
+    
     # update env WMSTile
     leafletProxy('map_env') %>%
       clearGroup('env') %>% 
       clearControls() %>% # remove legend
+      # addWMSTiles(
+      #   baseUrl = 'http://mbon.marine.usf.edu:8080/geoserver/satellite/wms',
+      #   group = 'env', layers = env_vars[[get_env_var()]][['curr_lyr']],
+      #   options = WMSTileOptions(
+      #     version = '1.3.0', format  = 'image/png', transparent = T,
+      #     time    = get_env_ymd())) %>%
       addWMSTiles(
-        baseUrl = 'http://mbon.marine.usf.edu:8080/geoserver/satellite/wms',
-        group = 'env', layers = env_vars[[get_env_var()]][['curr_lyr']],
+        baseUrl = wms_url, # "https://coastwatch.pfeg.noaa.gov/erddap/wms/jplMURSST41mday/request?",
+        layers  = wms_lyr, #"jplMURSST41mday:sst", # layers = env_vars[[env_var]][['curr_lyr']],
+        group   = 'env', 
         options = WMSTileOptions(
-          version = '1.3.0', format  = 'image/png', transparent = T,
-          time    = get_env_ymd())) %>%
+          version = "1.3.0", format = "image/png", transparent = T, opacity = 0.7,
+          #time = format(d,"%Y-%m-%dT00:00:00Z")))  %>%
+          time = get_env_ymd()))  %>%
       addLegend(
         pal = v$pal, values = v$values,
         position = 'bottomright',
         labFormat = labelFormat(transform = v$transform),
         title = v$legend)
+      # addLegend(
+      #   position="bottomright", 
+      #   title = paste0("SST (°C)<br>", format(dates[1],"%Y-%m-%d")),
+      #   colorNumeric("Spectral", c(0,32), reverse=T), seq(0,32))
     
     
   })
